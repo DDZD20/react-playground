@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useContext, memo } from 'react';
 import { PlaygroundContext } from '../../PlaygroundContext';
 import aiService from '../../services/AIService';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import './style.scss';
 
 interface Message {
@@ -96,8 +98,20 @@ const AISidebar = () => {
     }
   };
 
+  // 清除所有对话记录
   const clearConversation = () => {
     setMessages([]);
+  };
+  
+  // 完全重置侧边栏 - 清除所有对话和输入
+  const resetSidebar = () => {
+    setMessages([]);
+    setInputValue('');
+    // 把输入框重置为默认高度
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
+    console.log('侧边栏已重置');
   };
 
   // 调用 AI 服务获取回答
@@ -119,45 +133,79 @@ const AISidebar = () => {
     }
   };
 
-  // 格式化消息内容（支持代码块等 markdown 格式）
+  // 使用 ReactMarkdown 渲染消息内容
+  const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
+    const match = /language-(\w+)/.exec(className || '');
+    const language = match ? match[1] : '';
+    const code = String(children).replace(/\n$/, '');
+    
+    return !inline ? (
+      <div className="code-block-wrapper">
+        <div className="code-header">
+          <span>{language || 'code'}</span>
+          <button 
+            className="copy-button"
+            onClick={() => navigator.clipboard.writeText(code)}
+          >
+            复制
+          </button>
+        </div>
+        <pre className="code-block">
+          <code className={className} {...props}>
+            {children}
+          </code>
+        </pre>
+      </div>
+    ) : (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    );
+  };
+
+  // 格式化消息内容（支持全部markdown格式）
   const formatMessage = (content: string) => {
-    // 简单的代码块识别和格式化
-    // 实际应用中可以使用 markdown 解析库如 marked 或 react-markdown
-    return content.split('```').map((part, index) => {
-      if (index % 2 === 0) {
-        return <p key={index} className="message-text">{part}</p>;
-      } else {
-        const [language, ...codeLines] = part.split('\n');
-        const code = codeLines.join('\n');
-        return (
-          <pre key={index} className="code-block">
-            <div className="code-header">
-              <span>{language || 'code'}</span>
-              <button 
-                className="copy-button"
-                onClick={() => navigator.clipboard.writeText(code)}
-              >
-                复制
-              </button>
-            </div>
-            <code>{code}</code>
-          </pre>
-        );
-      }
-    });
+    return (
+      <ReactMarkdown 
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code: CodeBlock,
+          // 其他自定义组件可以在这里添加
+          a: ({node, ...props}) => <a target="_blank" rel="noopener noreferrer" {...props} />,
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    );
   };
 
   return (
     <div className={`ai-sidebar-wrapper ${showAISidebar ? 'show' : ''}`}>
       <div className={`ai-sidebar ${theme}`}>
         <div className="ai-sidebar-header">
-        <h3>AI 助手</h3>
-        {messages.length > 0 && (
-          <button className="clear-button" onClick={clearConversation}>
-            清除对话
-          </button>
-        )}
-      </div>
+          <div className="title-with-refresh">
+            <h3>AI 助手</h3>
+            <button 
+              className="title-refresh-button" 
+              onClick={resetSidebar} 
+              title="重置侧边栏"
+            >
+              <span className="refresh-icon">↻</span>
+            </button>
+          </div>
+          <div className="header-buttons">
+
+            {messages.length > 0 && (
+              <button 
+                className="clear-button" 
+                onClick={clearConversation}
+                title="清除当前对话"
+              >
+                清除对话
+              </button>
+            )}
+          </div>
+        </div>
 
       <div className="messages-container">
         {messages.length === 0 ? (
