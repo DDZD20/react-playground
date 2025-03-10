@@ -1,0 +1,52 @@
+.light {
+    --text: #444;
+    --bg: #fff;
+    --border: #ddd;
+    --box-shadow: #00000054;
+    --primary: #00d8fe;
+    --dialog: #fff;
+    --sidebar-toggle-bg: #f0f0f0;
+    --sidebar-toggle-hover: #e0e0e0;
+    --sidebar-toggle-text: #444;
+}
+  
+.dark {
+    --text: #fff;
+    --bg: #1a1a1a;
+    --border: #383838;
+    --box-shadow: #0000;
+    --primary: #00d8fe;
+    --dialog: #2a2a2a;
+    --sidebar-toggle-bg: #333;
+    --sidebar-toggle-hover: #444;
+    --sidebar-toggle-text: #e0e0e0;
+}
+
+// AI 侧栏切换按钮样式
+.ai-sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 40px;
+    font-weight: bold;
+    background-color: var(--sidebar-toggle-bg);
+    color: var(--sidebar-toggle-text);
+    border: none;
+    transition: all 0.3s ease;
+    
+    &:hover {
+        background-color: var(--sidebar-toggle-hover);
+    }
+    
+    &:focus {
+        outline: none;
+    }
+}
+
+// AI 侧栏容器样式
+.ai-sidebar-container {
+    height: 100%;
+    overflow: hidden;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+}
