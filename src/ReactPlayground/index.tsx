@@ -6,13 +6,16 @@ import Preview from "./components/Preview";
 import { useContext, useState } from "react";
 import { PlaygroundContext } from "./PlaygroundContext";
 import AISidebar from "./components/AISidebar";
+import { AI_MODELS } from "./services/AIService";
 
 import './index.scss';
 
 export default function ReactPlayground() {
     const { 
         theme, 
-        setTheme, 
+        setTheme,
+        currentModelId,
+        setCurrentModelId
     } = useContext(PlaygroundContext);
     
     const [showAISidebar, setShowAISidebar] = useState(false);
@@ -26,6 +29,49 @@ export default function ReactPlayground() {
         style={{height: '100vh'}}
     >
         <Header/>
+        {/* AI 模型选择下拉框 */}
+        <div 
+            className="model-selector-container"
+            style={{
+                position: 'absolute',
+                top: '10px',
+                right: '20px',
+                zIndex: 1000,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+            }}
+        >
+            <label 
+                htmlFor="model-selector"
+                style={{
+                    color: theme === 'dark' ? '#fff' : '#333',
+                    fontSize: '14px'
+                }}
+            >
+                AI 模型:
+            </label>
+            <select
+                id="model-selector"
+                value={currentModelId}
+                onChange={(e) => setCurrentModelId(e.target.value)}
+                style={{
+                    padding: '6px 10px',
+                    borderRadius: '4px',
+                    border: theme === 'dark' ? '1px solid #555' : '1px solid #ccc',
+                    backgroundColor: theme === 'dark' ? '#333' : '#fff',
+                    color: theme === 'dark' ? '#fff' : '#333',
+                    fontSize: '14px',
+                    cursor: 'pointer'
+                }}
+            >
+                {AI_MODELS.map(model => (
+                    <option key={model.id} value={model.id} title={model.description}>
+                        {model.name}
+                    </option>
+                ))}
+            </select>
+        </div>
         <div style={{ position: 'relative', height: 'calc(100% - 50px)' }}>
             <Allotment defaultSizes={[100, 100]}>
                 <Allotment.Pane minSize={0}>

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { PlaygroundContext } from '../../PlaygroundContext';
+import aiService from '../../services/AIService';
 import './style.scss';
 
 interface Message {
@@ -88,56 +89,19 @@ export default function AISidebar() {
     setMessages([]);
   };
 
-  // 调用 AI API 获取回答
+  // 调用 AI 服务获取回答
   const fetchAIResponse = async (
     question: string,
     fileContext: string,
     previousMessages: Message[]
   ): Promise<string> => {
-    // 构建对话历史
-    const conversationHistory = previousMessages.map(msg => ({
-      role: msg.role,
-      content: msg.content
-    }));
-
-    const options = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer sk-hwgtlynsdffsfwnhesyavbxmvhuvvshqgbjpbaesdwndijrt' // 注意：实际应用中应从环境变量获取
-      },
-      body: JSON.stringify({
-        model: "Qwen/Qwen2.5-Coder-7B-Instruct",
-        stream: false,
-        max_tokens: 1024,
-        temperature: 0.7,
-        messages: [
-          {
-            role: "system",
-            content: `你是一个专业的编程助手，擅长解答编程相关问题。
-当前用户正在编辑一个React项目，你需要根据用户提供的代码上下文回答问题。
-回答要简洁明了，代码示例应当符合现代JavaScript/TypeScript最佳实践。
-${fileContext ? `\n\n当前正在编辑的文件内容:\n${fileContext}` : ''}`
-          },
-          ...conversationHistory,
-          {
-            role: "user",
-            content: question
-          }
-        ]
-      })
-    };
-
     try {
-      const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', options);
-      if (!response.ok) {
-        throw new Error('AI 服务请求失败');
-      }
-
-      const data = await response.json();
-      return data.choices && data.choices[0]?.message?.content
-        ? data.choices[0].message.content
-        : '抱歉，无法获取有效回答。';
+      // 使用 AI 服务获取回答
+      return await aiService.getAssistantResponse(
+        question,
+        fileContext,
+        previousMessages
+      );
     } catch (error) {
       console.error('AI API 调用失败:', error);
       throw error;
