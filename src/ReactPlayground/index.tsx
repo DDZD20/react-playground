@@ -3,7 +3,7 @@ import 'allotment/dist/style.css';
 import Header from "./components/Header";
 import CodeEditor from "./components/CodeEditor";
 import Preview from "./components/Preview";
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { PlaygroundContext } from "./PlaygroundContext";
 import AISidebar from "./components/AISidebar";
 import { AI_MODELS } from "./services/AIService";
@@ -13,16 +13,13 @@ import './index.scss';
 export default function ReactPlayground() {
     const { 
         theme, 
-        setTheme,
+        // setTheme 未使用，暂时注释掉
+        // setTheme,
         currentModelId,
-        setCurrentModelId
+        setCurrentModelId,
+        showAISidebar,
+        toggleAISidebar
     } = useContext(PlaygroundContext);
-    
-    const [showAISidebar, setShowAISidebar] = useState(false);
-
-    const toggleAISidebar = () => {
-        setShowAISidebar(!showAISidebar);
-    };
 
     return <div 
         className={theme}
@@ -87,11 +84,11 @@ export default function ReactPlayground() {
                 className="ai-sidebar-toggle"
                 onClick={toggleAISidebar}
                 style={{
-                    position: 'absolute',
-                    right: showAISidebar ? '33.33%' : 0,
+                    position: 'fixed', /* 使用fixed定位，与侧边栏保持一致 */
+                    right: showAISidebar ? 'min(33.33%, 500px)' : 0, /* 与侧栏宽度精确匹配 */
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    zIndex: 100,
+                    zIndex: 998, /* 置于侧边栏之下但高于其他元素 */
                     background: theme === 'dark' ? '#333' : '#f0f0f0',
                     border: 'none',
                     borderRadius: showAISidebar ? '4px 0 0 4px' : '4px',
@@ -104,22 +101,8 @@ export default function ReactPlayground() {
                 {showAISidebar ? '>' : '<'}
             </button>
             
-            {/* 只有在 showAISidebar 为 true 时才渲染 AI 侧栏 */}
-            {showAISidebar && (
-                <div 
-                    className="ai-sidebar-container"
-                    style={{
-                        position: 'absolute',
-                        right: 0,
-                        top: 0,
-                        width: '33.33%',
-                        height: '100%',
-                        zIndex: 99
-                    }}
-                >
-                    <AISidebar />
-                </div>
-            )}
+            {/* 始终渲染 AI 侧栏，通过CSS控制显示隐藏 */}
+            <AISidebar />
         </div>
     </div>
 }

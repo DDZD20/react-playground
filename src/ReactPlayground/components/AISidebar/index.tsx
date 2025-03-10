@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect, useContext, memo } from 'react';
 import { PlaygroundContext } from '../../PlaygroundContext';
 import aiService from '../../services/AIService';
 import './style.scss';
@@ -9,8 +9,19 @@ interface Message {
   timestamp: number;
 }
 
-export default function AISidebar() {
-  const { files, selectedFileName, theme } = useContext(PlaygroundContext);
+const AISidebar = () => {
+  const { files, selectedFileName, theme, showAISidebar } = useContext(PlaygroundContext);
+  
+  // 在组件挂载时打印调试信息并确保初始状态是关闭的
+  useEffect(() => {
+    console.log('AISidebar组件已挂载，showAISidebar状态：', showAISidebar);
+    // 确保初始渲染时CSS正确应用
+    const wrapper = document.querySelector('.ai-sidebar-wrapper');
+    if (wrapper) {
+      wrapper.classList.remove('show');
+      console.log('确保移除show类');
+    }
+  }, []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -137,8 +148,9 @@ export default function AISidebar() {
   };
 
   return (
-    <div className={`ai-sidebar ${theme}`}>
-      <div className="ai-sidebar-header">
+    <div className={`ai-sidebar-wrapper ${showAISidebar ? 'show' : ''}`}>
+      <div className={`ai-sidebar ${theme}`}>
+        <div className="ai-sidebar-header">
         <h3>AI 助手</h3>
         {messages.length > 0 && (
           <button className="clear-button" onClick={clearConversation}>
@@ -212,6 +224,10 @@ export default function AISidebar() {
           发送
         </button>
       </div>
+      </div>
     </div>
   );
 }
+
+// 使用React.memo包装组件以保持组件状态
+export default memo(AISidebar);

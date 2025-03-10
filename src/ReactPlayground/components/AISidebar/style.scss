@@ -1,8 +1,32 @@
+.ai-sidebar-wrapper {
+  position: fixed; /* 使用fixed而非absolute，确保不影响文档流 */
+  width: 33.33%;
+  max-width: 500px; /* 防止在大屏幕上过宽 */
+  min-width: 300px; /* 确保在小屏幕上依然有足够空间 */
+  height: 100%;
+  right: 0;
+  top: 0;
+  overflow: hidden;
+  pointer-events: none; /* 默认禁用交互 */
+  transform: translateX(100%); /* 默认移出视图 */
+  transition: transform 0.3s ease;
+  will-change: transform; /* 优化动画性能 */
+  z-index: 999; /* 增大z-index确保在所有内容之上 */
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
+  
+  &.show {
+    transform: translateX(0);
+    pointer-events: auto; /* 显示时允许交互 */
+  }
+}
+
 .ai-sidebar {
   display: flex;
   flex-direction: column;
   height: 100%;
   width: 100%;
+  min-width: 0; /* 防止内容溢出 */
+  box-sizing: border-box; /* 确保宽度计算包含边框和内边距 */
   background-color: #f8f9fa;
   border-left: 1px solid #e0e0e0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;

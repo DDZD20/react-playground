@@ -18,6 +18,7 @@ export interface PlaygroundContext {
   selectedFileName: string
   theme: Theme
   currentModelId: string
+  showAISidebar: boolean
   setTheme: (theme: Theme) => void
   setSelectedFileName: (fileName: string) => void
   setFiles: (files: Files) => void
@@ -25,6 +26,7 @@ export interface PlaygroundContext {
   removeFile: (fileName: string) => void
   updateFileName: (oldFieldName: string, newFieldName: string) => void
   setCurrentModelId: (modelId: string) => void
+  toggleAISidebar: () => void
 }
 
 export type Theme = 'light' | 'dark'
@@ -32,6 +34,7 @@ export type Theme = 'light' | 'dark'
 export const PlaygroundContext = createContext<PlaygroundContext>({
   selectedFileName: 'App.tsx',
   currentModelId: AI_MODELS[0].id,
+  showAISidebar: false,
 } as PlaygroundContext)
 
 const getFilesFromUrl = () => {
@@ -51,6 +54,15 @@ export const PlaygroundProvider = (props: PropsWithChildren) => {
   const [selectedFileName, setSelectedFileName] = useState('App.tsx');
   const [theme, setTheme] = useState<Theme>('light')
   const [currentModelId, setCurrentModelId] = useState<string>(AI_MODELS[0].id)
+  // 明确将侧栏初始状态设置为关闭
+  const [showAISidebar, setShowAISidebar] = useState<boolean>(false)
+  
+  // 确保初始状态为关闭
+  useEffect(() => {
+    console.log('初始化侧栏状态:', showAISidebar)
+    // 强制重置侧栏状态为关闭
+    setShowAISidebar(false)
+  }, [])
 
   const addFile = (name: string) => {
     files[name] = {
@@ -92,6 +104,10 @@ export const PlaygroundProvider = (props: PropsWithChildren) => {
     aiService.setCurrentModel(currentModelId);
   }, [currentModelId])
 
+  const toggleAISidebar = () => {
+    setShowAISidebar(prev => !prev);
+  }
+
   return (
     <PlaygroundContext.Provider
       value={{
@@ -106,6 +122,8 @@ export const PlaygroundProvider = (props: PropsWithChildren) => {
         updateFileName,
         currentModelId,
         setCurrentModelId,
+        showAISidebar,
+        toggleAISidebar
       }}
     >
       {children}
