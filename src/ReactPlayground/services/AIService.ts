@@ -1,16 +1,10 @@
-import { Position } from 'monaco-editor';
+import type { AIModel, AIChatRequest, CodeCompletionRequest } from './type';
 
-// API 密钥（实际应用中应从环境变量获取）
-const API_KEY = 'sk-hwgtlynsdffsfwnhesyavbxmvhuvvshqgbjpbaesdwndijrt';
-const API_URL = 'https://api.siliconflow.cn/v1/chat/completions';
+// 从环境变量获取API密钥和URL
+const API_KEY = import.meta.env.VITE_REACT_APP_API_KEY || '';
+const API_URL = import.meta.env.VITE_REACT_APP_API_URL || 'https://api.siliconflow.cn/v1/chat/completions';
 
 // 支持的模型列表
-export interface AIModel {
-  id: string;
-  name: string;
-  description: string;
-}
-
 export const AI_MODELS: AIModel[] = [
   {
     id: 'Qwen/Qwen2.5-Coder-7B-Instruct',
@@ -23,14 +17,14 @@ export const AI_MODELS: AIModel[] = [
     description: '通义千问大模型，适合通用任务'
   },
   {
-    id: 'Qwen/Qwen1.5-110B-Chat',
-    name: 'Qwen 1.5 (110B)',
-    description: '通义千问1.5版本大模型'
+    id: 'Qwen/Qwen2.5-Coder-32B-Instruct',
+    name: 'Qwen 2.5 Coder(32B)',
+    description: 'Qwen2.5-Coder-32B-Instruct 是基于 Qwen2.5 开发的代码特定大语言模型。该模型通过 5.5 万亿 tokens 的训练，在代码生成、代码推理和代码修复方面都取得了显著提升。它是当前最先进的开源代码语言模型，编码能力可与 GPT-4 相媲美。模型不仅增强了编码能力，还保持了在数学和通用能力方面的优势，并支持长文本处理'
   },
   {
-    id: 'Qwen/Qwen1.5-32B-Chat',
-    name: 'Qwen 1.5 (32B)',
-    description: '通义千问1.5版本中型模型'
+    id: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-7B',
+    name: 'DeepSeek-R1-Distill-Qwen (7B)',
+    description: 'DeepSeek-R1-Distill-Qwen，适合代码相关任务'
   },
   {
     id: 'Qwen/Qwen1.5-14B-Chat',
@@ -38,32 +32,6 @@ export const AI_MODELS: AIModel[] = [
     description: '通义千问1.5版本小型模型'
   }
 ];
-
-// 消息接口
-export interface Message {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-}
-
-// AI 聊天请求接口
-export interface AIChatRequest {
-  messages: Message[];
-  model?: string;
-  temperature?: number;
-  max_tokens?: number;
-  stream?: boolean;
-}
-
-// 代码补全请求接口
-export interface CodeCompletionRequest {
-  code: string;
-  position: Position;
-  wordAtPosition?: {
-    word: string;
-    startColumn: number;
-    endColumn: number;
-  };
-}
 
 // AI 服务类
 class AIService {
