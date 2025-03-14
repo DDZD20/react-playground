@@ -67,7 +67,7 @@ class AIService {
   }
 
   // 通用 AI 聊天请求方法
-  async chatCompletion(request: AIChatRequest): Promise<string> {
+  async chatCompletion(request: AIChatRequest): Promise<Response> {
     const options = {
       method: 'POST',
       headers: {
@@ -76,7 +76,7 @@ class AIService {
       },
       body: JSON.stringify({
         model: request.model || this.currentModel,
-        stream: request.stream || false,
+        stream: true, // 始终使用流式传输
         max_tokens: request.max_tokens || 1024,
         temperature: request.temperature || 0.7,
         messages: request.messages
@@ -88,11 +88,7 @@ class AIService {
       if (!response.ok) {
         throw new Error('AI 服务请求失败');
       }
-
-      const data = await response.json();
-      return data.choices && data.choices[0]?.message?.content
-        ? data.choices[0].message.content
-        : '抱歉，无法获取有效回答。';
+      return response;
     } catch (error) {
       console.error('AI API 调用失败:', error);
       throw error;
@@ -103,8 +99,9 @@ class AIService {
   async getAssistantResponse(
     question: string,
     fileContext: string = '',
-    previousMessages: { role: 'user' | 'assistant'; content: string }[] = []
-  ): Promise<string> {
+    previousMessages: { role: 'user' | 'assistant'; content: string }[] = [],
+    onUpdate?: (content: string) => void
+  ): Promise<void> {
     // 构建对话历史
     const conversationHistory = previousMessages.map(msg => ({
       role: msg.role,
@@ -133,7 +130,46 @@ ${fileContext ? `\n\n当前正在编辑的文件内容:\n${fileContext}` : ''}`;
       temperature: 0.7
     };
 
-    return this.chatCompletion(request);
+    try {
+      const response = await this.chatCompletion(request);
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('无法获取响应流');
+
+      let accumulatedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // 解析返回的数据
+        const text = new TextDecoder().decode(value);
+        const lines = text.split('\n');
+        
+        for (const line of lines) {
+          if (line.trim() === '') continue;
+          if (line.startsWith('data: ')) {
+            const data = line.slice(5);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices[0]?.delta?.content || '';
+              accumulatedText += content;
+              
+              // 调用回调函数更新内容
+              if (onUpdate) {
+                onUpdate(accumulatedText);
+              }
+            } catch (e) {
+              console.error('解析流式数据失败:', e);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('AI API 调用失败:', error);
+      throw error;
+    }
   }
 
   // 获取代码补全建议
@@ -170,11 +206,40 @@ ${contextCode}|
     };
 
     try {
-      const content = await this.chatCompletion(request2);
+      const response = await this.chatCompletion(request2);
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('无法获取响应流');
+
+      let accumulatedText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // 解析返回的数据
+        const text = new TextDecoder().decode(value);
+        const lines = text.split('\n');
+        
+        for (const line of lines) {
+          if (line.trim() === '') continue;
+          if (line.startsWith('data: ')) {
+            const data = line.slice(5);
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices[0]?.delta?.content || '';
+              accumulatedText += content;
+            } catch (e) {
+              console.error('解析流式数据失败:', e);
+            }
+          }
+        }
+      }
       
       // 提取代码内容，移除可能的代码块标记和多余空白
-      const codeMatch = content.match(/```(?:javascript|typescript)?\n?([\s\S]*?)(?:\n```|$)/);
-      const suggestion = codeMatch ? codeMatch[1].trim() : content.trim();
+      const codeMatch = accumulatedText.match(/```(?:javascript|typescript)?\n?([\s\S]*?)(?:\n```|$)/);
+      const suggestion = codeMatch ? codeMatch[1].trim() : accumulatedText.trim();
       
       // 如果建议是空的或只包含空白字符，返回空数组
       if (suggestion.length === 0 || /^\s*$/.test(suggestion)) {

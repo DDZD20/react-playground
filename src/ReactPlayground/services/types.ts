@@ -19,7 +19,6 @@ export interface AIChatRequest {
   model?: string;
   temperature?: number;
   max_tokens?: number;
-  stream?: boolean;
 }
 
 // 代码补全请求接口
