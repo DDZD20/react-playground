@@ -141,27 +141,32 @@ const AISidebar = () => {
   // 使用 ReactMarkdown 渲染消息内容
   const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
     const match = /language-(\w+)/.exec(className || "");
-    const language = match ? match[1] : "";
     const code = String(children).replace(/\n$/, "");
 
-    return !inline ? (
-      <div className="code-block-wrapper">
-        <div className="code-header">
-          <span>{language || "code"}</span>
-          <button
-            className="copy-button"
-            onClick={() => navigator.clipboard.writeText(code)}
-          >
-            复制
-          </button>
+    // 如果有语言标识，则渲染为代码块
+    if (match) {
+      return (
+        <div className="code-block-wrapper">
+          <div className="code-header">
+            <span>{match[1]}</span>
+            <button
+              className="copy-button"
+              onClick={() => navigator.clipboard.writeText(code)}
+            >
+              复制
+            </button>
+          </div>
+          <pre className="code-block">
+            <code className={className} {...props}>
+              {children}
+            </code>
+          </pre>
         </div>
-        <pre className="code-block">
-          <code className={className} {...props}>
-            {children}
-          </code>
-        </pre>
-      </div>
-    ) : (
+      );
+    }
+
+    // 否则渲染为内联代码
+    return (
       <code className={className} {...props}>
         {children}
       </code>
