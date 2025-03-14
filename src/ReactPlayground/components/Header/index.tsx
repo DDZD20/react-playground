@@ -17,7 +17,7 @@ export default function Header() {
         <img alt='logo' src={logoSvg}/>
         <span>React Playground</span>
       </div>
-      <div className={styles.links}>
+      <div className={styles.links} style={{ marginRight: '320px' }}>
         {theme === 'light' && (
           <MoonOutlined
             title='切换暗色主题'
