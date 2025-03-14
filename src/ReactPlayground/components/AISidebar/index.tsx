@@ -3,6 +3,7 @@ import { PlaygroundContext } from "../../PlaygroundContext";
 import aiService from "../../services/AIService";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { DiffEditor } from "@monaco-editor/react";
 import "./style.scss";
 
 // 添加 DiffModal 组件
@@ -16,7 +17,34 @@ interface DiffModalProps {
 }
 
 const DiffModal = ({ isOpen, onClose, onApply, originalCode, newCode, fileName }: DiffModalProps) => {
+  const { theme } = useContext(PlaygroundContext);
+  const [mounted, setMounted] = useState(false);
+  
+  // 当编辑器加载完成时触发
+  const handleEditorDidMount = () => {
+    setMounted(true);
+  };
+  
   if (!isOpen) return null;
+
+  // 根据文件名获取语言
+  const getLanguageFromFileName = (fileName: string): string => {
+    const ext = fileName.split('.').pop()?.toLowerCase() || '';
+    
+    const langMap: Record<string, string> = {
+      'js': 'javascript',
+      'jsx': 'javascriptreact',
+      'ts': 'typescript',
+      'tsx': 'typescriptreact',
+      'html': 'html',
+      'css': 'css',
+      'scss': 'scss',
+      'json': 'json',
+      'md': 'markdown'
+    };
+    
+    return langMap[ext] || 'typescript';
+  };
 
   return (
     <div className="diff-modal-overlay">
@@ -26,20 +54,44 @@ const DiffModal = ({ isOpen, onClose, onApply, originalCode, newCode, fileName }
           <button className="diff-modal-close" onClick={onClose}>×</button>
         </div>
         <div className="diff-modal-body">
-          <div className="diff-preview">
-            <div className="diff-section">
-              <h4>当前代码</h4>
-              <pre className="diff-code original">{originalCode}</pre>
-            </div>
-            <div className="diff-section">
-              <h4>新代码</h4>
-              <pre className="diff-code modified">{newCode}</pre>
-            </div>
-          </div>
+          <DiffEditor
+            original={originalCode}
+            modified={newCode}
+            language={getLanguageFromFileName(fileName)}
+            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+            options={{
+              readOnly: true,
+              renderSideBySide: true,
+              minimap: { enabled: false },
+              lineNumbers: 'on',
+              scrollBeyondLastLine: false,
+              wordWrap: 'on',
+              diffWordWrap: 'on',
+              fontSize: 13,
+              renderOverviewRuler: false,
+              colorDecorators: true,
+              scrollbar: {
+                vertical: 'visible',
+                horizontal: 'visible',
+                verticalScrollbarSize: 8,
+                horizontalScrollbarSize: 8
+              },
+              ignoreTrimWhitespace: false,
+              renderIndicators: true
+            }}
+            height="400px"
+            width="100%"
+            onMount={handleEditorDidMount}
+          />
         </div>
         <div className="diff-modal-footer">
-          <button className="diff-button diff-apply" onClick={onApply}>应用更改</button>
-          <button className="diff-button diff-cancel" onClick={onClose}>取消</button>
+          <div className="diff-info">
+            {mounted && <span>{newCode.length !== originalCode.length ? `已修改 ${Math.abs(newCode.length - originalCode.length)} 个字符` : "代码长度相同，但内容已更改"}</span>}
+          </div>
+          <div className="diff-actions">
+            <button className="diff-button diff-cancel" onClick={onClose}>取消</button>
+            <button className="diff-button diff-apply" onClick={onApply}>应用更改</button>
+          </div>
         </div>
       </div>
     </div>
@@ -186,6 +238,32 @@ const AISidebar = () => {
     const code = String(children).replace(/\n$/, "");
     const [showDiffModal, setShowDiffModal] = useState(false);
     
+    // 检查是否有选中文件且文件扩展名与代码语言匹配
+    const canApply = () => {
+      if (!selectedFileName || !files[selectedFileName]) return false;
+      
+      // 获取文件扩展名和代码语言
+      const fileExt = selectedFileName.split('.').pop() || '';
+      const codeLanguage = match ? match[1] : '';
+      
+      // 检查语言匹配
+      // 针对常见语言进行匹配
+      // 如 ts/tsx 对应 typescript/typescriptreact
+      // js/jsx 对应 javascript/javascriptreact 等
+      if (
+        (fileExt === 'ts' && (codeLanguage === 'typescript' || codeLanguage === 'ts')) ||
+        (fileExt === 'tsx' && (codeLanguage === 'typescriptreact' || codeLanguage === 'tsx')) ||
+        (fileExt === 'js' && (codeLanguage === 'javascript' || codeLanguage === 'js')) ||
+        (fileExt === 'jsx' && (codeLanguage === 'javascriptreact' || codeLanguage === 'jsx')) ||
+        fileExt === codeLanguage
+      ) {
+        return true;
+      }
+      
+      // 默认允许应用
+      return true;
+    };
+    
     // 处理应用代码到编辑器
     const handleApplyCode = () => {
       if (!selectedFileName || !files[selectedFileName]) return;
@@ -236,10 +314,11 @@ const AISidebar = () => {
                 <button
                   className="copy-button"
                   onClick={() => navigator.clipboard.writeText(code)}
+                  title="复制代码"
                 >
                   复制
                 </button>
-                {selectedFileName && (
+                {selectedFileName && canApply() && (
                   <button
                     className="apply-button"
                     onClick={handleApplyCode}
