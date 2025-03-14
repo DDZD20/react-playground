@@ -13,7 +13,8 @@ export interface EditorFile {
 interface Props {
     file: EditorFile
     onChange?: EditorProps['onChange'],
-    options?: monaco.editor.IStandaloneEditorConstructionOptions
+    options?: monaco.editor.IStandaloneEditorConstructionOptions,
+    onMount?: (editor: monaco.editor.IStandaloneCodeEditor) => void
 }
 
 interface AICompletionRequest {
@@ -37,9 +38,14 @@ async function fetchAISuggestions(request: AICompletionRequest): Promise<string[
 }
 
 export default function Editor(props: Props) {
-    const { file, onChange, options } = props;
+    const { file, onChange, options, onMount } = props;
 
     const handleEditorMount: OnMount = (editor, monacoInstance) => {
+        // 调用外部传入的 onMount 回调
+        if (onMount) {
+            onMount(editor);
+        }
+
         editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyJ, () => {
             editor.getAction('editor.action.formatDocument')?.run()
         });

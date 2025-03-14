@@ -105,7 +105,7 @@ interface Message {
 }
 
 const AISidebar = () => {
-  const { files, selectedFileName, theme, showAISidebar, setFiles } =
+  const { files, selectedFileName, theme, showAISidebar, setFiles, setDiffMode } =
     useContext(PlaygroundContext);
 
   // 在组件挂载时打印调试信息并确保初始状态是关闭的
@@ -233,7 +233,7 @@ const AISidebar = () => {
 
   // 使用 ReactMarkdown 渲染消息内容
   const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
-    const { files, selectedFileName, setFiles } = useContext(PlaygroundContext);
+    const { files, selectedFileName, setFiles, setDiffMode } = useContext(PlaygroundContext);
     const match = /language-(\w+)/.exec(className || "");
     const code = String(children).replace(/\n$/, "");
     const [showDiffModal, setShowDiffModal] = useState(false);
@@ -280,11 +280,19 @@ const AISidebar = () => {
         return;
       }
       
-      // 显示差异预览对话框
-      setShowDiffModal(true);
+      // 两种模式：1. 使用弹窗预览 2. 使用编辑器差异模式
+      const useEditorDiffMode = true; // 设置为 true 使用编辑器差异模式
+      
+      if (useEditorDiffMode) {
+        // 设置差异编辑模式，并传入待应用的代码
+        setDiffMode(true, newCode);
+      } else {
+        // 显示差异预览对话框
+        setShowDiffModal(true);
+      }
     };
     
-    // 确认应用代码
+    // 确认应用代码 (弹窗模式使用)
     const confirmApplyCode = () => {
       if (!selectedFileName || !files[selectedFileName]) return;
       
@@ -336,7 +344,7 @@ const AISidebar = () => {
             </pre>
           </div>
           
-          {/* 差异预览对话框 */}
+          {/* 差异预览对话框 (仅在弹窗模式下使用) */}
           {selectedFileName && (
             <DiffModal
               isOpen={showDiffModal}

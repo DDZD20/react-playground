@@ -50,3 +50,62 @@
     overflow: hidden;
     box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
 }
+
+/* 差异编辑器控制按钮样式 */
+.diff-editor-controls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.diff-editor-apply,
+.diff-editor-cancel {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.diff-editor-apply {
+  background-color: #28a745;
+  color: white;
+  
+  &:hover {
+    background-color: #218838;
+  }
+}
+
+.diff-editor-cancel {
+  background-color: #6c757d;
+  color: white;
+  
+  &:hover {
+    background-color: #5a6268;
+  }
+}
+
+/* 深色主题适配 */
+.dark {
+  .diff-editor-apply {
+    background-color: #2ea043;
+    
+    &:hover {
+      background-color: #3fb950;
+    }
+  }
+  
+  .diff-editor-cancel {
+    background-color: #6e7681;
+    
+    &:hover {
+      background-color: #7d8590;
+    }
+  }
+}

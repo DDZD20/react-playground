@@ -19,6 +19,8 @@ export interface PlaygroundContext {
   theme: Theme
   currentModelId: string
   showAISidebar: boolean
+  isDiffMode: boolean
+  pendingCode: string | null
   setTheme: (theme: Theme) => void
   setSelectedFileName: (fileName: string) => void
   setFiles: (files: Files) => void
@@ -27,6 +29,7 @@ export interface PlaygroundContext {
   updateFileName: (oldFieldName: string, newFieldName: string) => void
   setCurrentModelId: (modelId: string) => void
   toggleAISidebar: () => void
+  setDiffMode: (isDiffMode: boolean, pendingCode?: string | null) => void
 }
 
 export type Theme = 'light' | 'dark'
@@ -35,6 +38,8 @@ export const PlaygroundContext = createContext<PlaygroundContext>({
   selectedFileName: 'App.tsx',
   currentModelId: AI_MODELS[0].id,
   showAISidebar: false,
+  isDiffMode: false,
+  pendingCode: null,
 } as PlaygroundContext)
 
 const getFilesFromUrl = () => {
@@ -56,6 +61,10 @@ export const PlaygroundProvider = (props: PropsWithChildren) => {
   const [currentModelId, setCurrentModelId] = useState<string>(AI_MODELS[0].id)
   // 明确将侧栏初始状态设置为关闭
   const [showAISidebar, setShowAISidebar] = useState<boolean>(false)
+  // 差异编辑模式状态
+  const [isDiffMode, setIsDiffMode] = useState<boolean>(false)
+  // 待应用的代码
+  const [pendingCode, setPendingCode] = useState<string | null>(null)
   
   // 确保初始状态为关闭
   useEffect(() => {
@@ -107,6 +116,12 @@ export const PlaygroundProvider = (props: PropsWithChildren) => {
   const toggleAISidebar = () => {
     setShowAISidebar(prev => !prev);
   }
+  
+  // 设置差异编辑模式
+  const setDiffMode = (isDiffMode: boolean, newPendingCode: string | null = null) => {
+    setIsDiffMode(isDiffMode);
+    setPendingCode(newPendingCode);
+  }
 
   return (
     <PlaygroundContext.Provider
@@ -123,7 +138,10 @@ export const PlaygroundProvider = (props: PropsWithChildren) => {
         currentModelId,
         setCurrentModelId,
         showAISidebar,
-        toggleAISidebar
+        toggleAISidebar,
+        isDiffMode,
+        pendingCode,
+        setDiffMode
       }}
     >
       {children}
