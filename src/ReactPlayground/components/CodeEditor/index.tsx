@@ -41,9 +41,6 @@ export default function CodeEditor() {
     // 应用差异编辑器中的更改
     const applyChanges = () => {
         if (pendingCode !== null && selectedFileName) {
-            // 获取当前编辑器模型和差异编辑器
-            const diffEditor = diffEditorRef.current;
-            
             // 退出差异模式
             setDiffMode(false, null);
             

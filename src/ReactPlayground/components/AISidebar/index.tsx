@@ -3,100 +3,7 @@ import { PlaygroundContext } from "../../PlaygroundContext";
 import aiService from "../../services/AIService";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { DiffEditor } from "@monaco-editor/react";
 import "./style.scss";
-
-// 添加 DiffModal 组件
-interface DiffModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onApply: () => void;
-  originalCode: string;
-  newCode: string;
-  fileName: string;
-}
-
-const DiffModal = ({ isOpen, onClose, onApply, originalCode, newCode, fileName }: DiffModalProps) => {
-  const { theme } = useContext(PlaygroundContext);
-  const [mounted, setMounted] = useState(false);
-  
-  // 当编辑器加载完成时触发
-  const handleEditorDidMount = () => {
-    setMounted(true);
-  };
-  
-  if (!isOpen) return null;
-
-  // 根据文件名获取语言
-  const getLanguageFromFileName = (fileName: string): string => {
-    const ext = fileName.split('.').pop()?.toLowerCase() || '';
-    
-    const langMap: Record<string, string> = {
-      'js': 'javascript',
-      'jsx': 'javascriptreact',
-      'ts': 'typescript',
-      'tsx': 'typescriptreact',
-      'html': 'html',
-      'css': 'css',
-      'scss': 'scss',
-      'json': 'json',
-      'md': 'markdown'
-    };
-    
-    return langMap[ext] || 'typescript';
-  };
-
-  return (
-    <div className="diff-modal-overlay">
-      <div className="diff-modal">
-        <div className="diff-modal-header">
-          <h3>应用代码到 {fileName}</h3>
-          <button className="diff-modal-close" onClick={onClose}>×</button>
-        </div>
-        <div className="diff-modal-body">
-          <DiffEditor
-            original={originalCode}
-            modified={newCode}
-            language={getLanguageFromFileName(fileName)}
-            theme={theme === 'dark' ? 'vs-dark' : 'light'}
-            options={{
-              readOnly: true,
-              renderSideBySide: true,
-              minimap: { enabled: false },
-              lineNumbers: 'on',
-              scrollBeyondLastLine: false,
-              wordWrap: 'on',
-              diffWordWrap: 'on',
-              fontSize: 13,
-              renderOverviewRuler: false,
-              colorDecorators: true,
-              scrollbar: {
-                vertical: 'visible',
-                horizontal: 'visible',
-                verticalScrollbarSize: 8,
-                horizontalScrollbarSize: 8
-              },
-              ignoreTrimWhitespace: false,
-              renderIndicators: true
-            }}
-            height="400px"
-            width="100%"
-            onMount={handleEditorDidMount}
-          />
-        </div>
-        <div className="diff-modal-footer">
-          <div className="diff-info">
-            {mounted && <span>{newCode.length !== originalCode.length ? `已修改 ${Math.abs(newCode.length - originalCode.length)} 个字符` : "代码长度相同，但内容已更改"}</span>}
-          </div>
-          <div className="diff-actions">
-            <button className="diff-button diff-cancel" onClick={onClose}>取消</button>
-            <button className="diff-button diff-apply" onClick={onApply}>应用更改</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 interface Message {
   role: "user" | "assistant";
@@ -105,7 +12,7 @@ interface Message {
 }
 
 const AISidebar = () => {
-  const { files, selectedFileName, theme, showAISidebar, setFiles, setDiffMode } =
+  const { files, selectedFileName, theme, showAISidebar } =
     useContext(PlaygroundContext);
 
   // 在组件挂载时打印调试信息并确保初始状态是关闭的
@@ -233,10 +140,9 @@ const AISidebar = () => {
 
   // 使用 ReactMarkdown 渲染消息内容
   const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
-    const { files, selectedFileName, setFiles, setDiffMode } = useContext(PlaygroundContext);
+    const { files, selectedFileName, setDiffMode } = useContext(PlaygroundContext);
     const match = /language-(\w+)/.exec(className || "");
     const code = String(children).replace(/\n$/, "");
-    const [showDiffModal, setShowDiffModal] = useState(false);
     
     // 检查是否有选中文件且文件扩展名与代码语言匹配
     const canApply = () => {
@@ -280,35 +186,8 @@ const AISidebar = () => {
         return;
       }
       
-      // 两种模式：1. 使用弹窗预览 2. 使用编辑器差异模式
-      const useEditorDiffMode = true; // 设置为 true 使用编辑器差异模式
-      
-      if (useEditorDiffMode) {
-        // 设置差异编辑模式，并传入待应用的代码
-        setDiffMode(true, newCode);
-      } else {
-        // 显示差异预览对话框
-        setShowDiffModal(true);
-      }
-    };
-    
-    // 确认应用代码 (弹窗模式使用)
-    const confirmApplyCode = () => {
-      if (!selectedFileName || !files[selectedFileName]) return;
-      
-      const currentFile = files[selectedFileName];
-      
-      // 更新文件内容
-      setFiles({
-        ...files,
-        [selectedFileName]: {
-          ...currentFile,
-          value: code
-        }
-      });
-      
-      // 关闭差异预览对话框
-      setShowDiffModal(false);
+      // 设置差异编辑模式，并传入待应用的代码
+      setDiffMode(true, newCode);
     };
 
     // 如果有语言标识，则渲染为代码块
@@ -343,18 +222,6 @@ const AISidebar = () => {
               </code>
             </pre>
           </div>
-          
-          {/* 差异预览对话框 (仅在弹窗模式下使用) */}
-          {selectedFileName && (
-            <DiffModal
-              isOpen={showDiffModal}
-              onClose={() => setShowDiffModal(false)}
-              onApply={confirmApplyCode}
-              originalCode={files[selectedFileName]?.value || ""}
-              newCode={code}
-              fileName={selectedFileName}
-            />
-          )}
         </>
       );
     }

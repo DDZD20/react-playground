@@ -7,6 +7,7 @@ import { DownloadOutlined, MoonOutlined, ShareAltOutlined, SunOutlined } from '@
 import { message } from 'antd';
 import copy from 'copy-to-clipboard';
 import { downloadFiles } from '../../utils';
+import ModelSelector from './ModelSelector';
 
 export default function Header() {
   const { files, theme, setTheme} = useContext(PlaygroundContext)
@@ -46,6 +47,7 @@ export default function Header() {
             message.success('下载完成')
           }}
         />
+        <ModelSelector />
       </div>
     </div>
   )
