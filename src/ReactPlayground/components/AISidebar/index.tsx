@@ -5,6 +5,47 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./style.scss";
 
+// 添加 DiffModal 组件
+interface DiffModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onApply: () => void;
+  originalCode: string;
+  newCode: string;
+  fileName: string;
+}
+
+const DiffModal = ({ isOpen, onClose, onApply, originalCode, newCode, fileName }: DiffModalProps) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="diff-modal-overlay">
+      <div className="diff-modal">
+        <div className="diff-modal-header">
+          <h3>应用代码到 {fileName}</h3>
+          <button className="diff-modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="diff-modal-body">
+          <div className="diff-preview">
+            <div className="diff-section">
+              <h4>当前代码</h4>
+              <pre className="diff-code original">{originalCode}</pre>
+            </div>
+            <div className="diff-section">
+              <h4>新代码</h4>
+              <pre className="diff-code modified">{newCode}</pre>
+            </div>
+          </div>
+        </div>
+        <div className="diff-modal-footer">
+          <button className="diff-button diff-apply" onClick={onApply}>应用更改</button>
+          <button className="diff-button diff-cancel" onClick={onClose}>取消</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -12,7 +53,7 @@ interface Message {
 }
 
 const AISidebar = () => {
-  const { files, selectedFileName, theme, showAISidebar } =
+  const { files, selectedFileName, theme, showAISidebar, setFiles } =
     useContext(PlaygroundContext);
 
   // 在组件挂载时打印调试信息并确保初始状态是关闭的
@@ -140,28 +181,94 @@ const AISidebar = () => {
 
   // 使用 ReactMarkdown 渲染消息内容
   const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
+    const { files, selectedFileName, setFiles } = useContext(PlaygroundContext);
     const match = /language-(\w+)/.exec(className || "");
     const code = String(children).replace(/\n$/, "");
+    const [showDiffModal, setShowDiffModal] = useState(false);
+    
+    // 处理应用代码到编辑器
+    const handleApplyCode = () => {
+      if (!selectedFileName || !files[selectedFileName]) return;
+      
+      const currentFile = files[selectedFileName];
+      
+      // 获取当前内容和新内容
+      const currentCode = currentFile.value;
+      const newCode = code;
+      
+      // 如果内容相同，不需要更新
+      if (currentCode === newCode) {
+        alert("代码没有变化，无需应用");
+        return;
+      }
+      
+      // 显示差异预览对话框
+      setShowDiffModal(true);
+    };
+    
+    // 确认应用代码
+    const confirmApplyCode = () => {
+      if (!selectedFileName || !files[selectedFileName]) return;
+      
+      const currentFile = files[selectedFileName];
+      
+      // 更新文件内容
+      setFiles({
+        ...files,
+        [selectedFileName]: {
+          ...currentFile,
+          value: code
+        }
+      });
+      
+      // 关闭差异预览对话框
+      setShowDiffModal(false);
+    };
 
     // 如果有语言标识，则渲染为代码块
     if (match) {
       return (
-        <div className="code-block-wrapper">
-          <div className="code-header">
-            <span>{match[1]}</span>
-            <button
-              className="copy-button"
-              onClick={() => navigator.clipboard.writeText(code)}
-            >
-              复制
-            </button>
+        <>
+          <div className="code-block-wrapper">
+            <div className="code-header">
+              <span>{match[1]}</span>
+              <div className="code-actions">
+                <button
+                  className="copy-button"
+                  onClick={() => navigator.clipboard.writeText(code)}
+                >
+                  复制
+                </button>
+                {selectedFileName && (
+                  <button
+                    className="apply-button"
+                    onClick={handleApplyCode}
+                    title={`应用到 ${selectedFileName}`}
+                  >
+                    应用
+                  </button>
+                )}
+              </div>
+            </div>
+            <pre className="code-block">
+              <code className={className} {...props}>
+                {children}
+              </code>
+            </pre>
           </div>
-          <pre className="code-block">
-            <code className={className} {...props}>
-              {children}
-            </code>
-          </pre>
-        </div>
+          
+          {/* 差异预览对话框 */}
+          {selectedFileName && (
+            <DiffModal
+              isOpen={showDiffModal}
+              onClose={() => setShowDiffModal(false)}
+              onApply={confirmApplyCode}
+              originalCode={files[selectedFileName]?.value || ""}
+              newCode={code}
+              fileName={selectedFileName}
+            />
+          )}
+        </>
       );
     }
 

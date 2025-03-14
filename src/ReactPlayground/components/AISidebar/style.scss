@@ -313,18 +313,35 @@
   border-top-right-radius: 4px;
 }
 
-.copy-button {
+.code-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.copy-button, .apply-button {
   background: none;
   border: none;
-  color: #0366d6;
   cursor: pointer;
   font-size: 12px;
   padding: 2px 6px;
   border-radius: 4px;
 }
 
+.copy-button {
+  color: #0366d6;
+}
+
 .copy-button:hover {
   background-color: #ddd;
+}
+
+.apply-button {
+  color: #fff;
+  background-color: #28a745;
+}
+
+.apply-button:hover {
+  background-color: #218838;
 }
 
 .code-block code {
@@ -582,5 +599,176 @@
   
   .send-button:disabled {
     background-color: #444;
+  }
+}
+
+/* 差异预览对话框样式 */
+.diff-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.diff-modal {
+  width: 90%;
+  max-width: 1000px;
+  max-height: 90vh;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.diff-modal-header {
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.diff-modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.diff-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #888;
+  
+  &:hover {
+    color: #333;
+  }
+}
+
+.diff-modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.diff-preview {
+  display: flex;
+  gap: 16px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+}
+
+.diff-section {
+  flex: 1;
+}
+
+.diff-section h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.diff-code {
+  background-color: #f5f5f5;
+  padding: 12px;
+  border-radius: 4px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow: auto;
+  max-height: 400px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.diff-code.original {
+  border-left: 3px solid #6c757d;
+}
+
+.diff-code.modified {
+  border-left: 3px solid #28a745;
+}
+
+.diff-modal-footer {
+  padding: 16px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid #eee;
+}
+
+.diff-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.diff-apply {
+  background-color: #28a745;
+  color: #fff;
+  
+  &:hover {
+    background-color: #218838;
+  }
+}
+
+.diff-cancel {
+  background-color: #6c757d;
+  color: #fff;
+  
+  &:hover {
+    background-color: #5a6268;
+  }
+}
+
+/* 适配深色模式 */
+.dark {
+  .diff-modal {
+    background-color: #2d2d2d;
+    border: 1px solid #444;
+  }
+  
+  .diff-modal-header {
+    border-bottom: 1px solid #444;
+  }
+  
+  .diff-modal-footer {
+    border-top: 1px solid #444;
+  }
+  
+  .diff-modal-header h3 {
+    color: #eee;
+  }
+  
+  .diff-modal-close {
+    color: #aaa;
+    
+    &:hover {
+      color: #fff;
+    }
+  }
+  
+  .diff-section h4 {
+    color: #ccc;
+  }
+  
+  .diff-code {
+    background-color: #333;
+    color: #eee;
   }
 }
