@@ -1,0 +1,140 @@
+/* 编辑器容器 */
+.editor-container {
+  height: 100%;
+  position: relative;
+}
+
+/* 差异模式下的编辑器 */
+.editor-container.diff-mode {
+  position: relative;
+}
+
+/* 添加的代码行样式 */
+.diff-added-line {
+  background-color: rgba(0, 255, 0, 0.1);
+  border-left: 3px solid #28a745;
+}
+
+/* 添加代码的左侧指示器 */
+.diff-added-glyph::before {
+  content: "+";
+  color: #28a745;
+  font-weight: bold;
+  position: absolute;
+  left: 2px;
+}
+
+/* 删除的代码行样式 */
+.diff-removed-line {
+  background-color: rgba(255, 0, 0, 0.1);
+  border-left: 3px solid #dc3545;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* 删除代码的左侧指示器 */
+.diff-removed-glyph::before {
+  content: "-";
+  color: #dc3545;
+  font-weight: bold;
+  position: absolute;
+  left: 2px;
+}
+
+/* 操作按钮容器 */
+.diff-action-widget {
+  display: flex;
+  gap: 5px;
+  z-index: 100;
+  background: #f8f9fa;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  padding: 2px;
+}
+
+/* 操作按钮共同样式 */
+.diff-action-widget button {
+  border: none;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+/* 接受按钮样式 */
+.diff-action-accept {
+  background-color: #28a745;
+  color: white;
+}
+
+.diff-action-accept:hover {
+  background-color: #218838;
+}
+
+/* 拒绝按钮样式 */
+.diff-action-reject {
+  background-color: #dc3545;
+  color: white;
+}
+
+.diff-action-reject:hover {
+  background-color: #c82333;
+}
+
+/* 底部控制按钮区域 */
+.diff-editor-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-top: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+/* 底部控制按钮 */
+.diff-editor-controls button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+/* 应用按钮 */
+.diff-editor-apply {
+  background-color: #28a745;
+  color: white;
+}
+
+.diff-editor-apply:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.diff-editor-apply:disabled {
+  background-color: #6c757d;
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* 取消按钮 */
+.diff-editor-cancel {
+  background-color: #dc3545;
+  color: white;
+}
+
+.diff-editor-cancel:hover {
+  background-color: #c82333;
+}
+
+/* 消息提示 */
+.diff-editor-message {
+  color: #dc3545;
+  font-size: 14px;
+  margin-left: auto;
+}

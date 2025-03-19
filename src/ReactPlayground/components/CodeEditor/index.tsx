@@ -3,7 +3,6 @@ import Editor from "./Editor";
 import FileNameList from "./FileNameList";
 import { PlaygroundContext } from "../../PlaygroundContext";
 import { debounce } from 'lodash-es';
-import DiffEditor from "./DiffEditor";
 import * as monaco from 'monaco-editor';
 
 export default function CodeEditor() {
@@ -21,21 +20,17 @@ export default function CodeEditor() {
     
     // 创建对编辑器实例的引用
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
-    const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null);
 
     function onEditorChange(value?: string) {
-        files[file.name].value = value!;
-        setFiles({ ...files });
+        if (!isDiffMode) {
+            files[file.name].value = value!;
+            setFiles({ ...files });
+        }
     }
     
     // 处理编辑器挂载
     const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
         editorRef.current = editor;
-    };
-    
-    // 处理差异编辑器的挂载
-    const handleDiffEditorDidMount = (editor: monaco.editor.IStandaloneDiffEditor) => {
-        diffEditorRef.current = editor;
     };
 
     // 应用差异编辑器中的更改
@@ -83,37 +78,19 @@ export default function CodeEditor() {
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <FileNameList/>
             
-            {isDiffMode ? (
-                <DiffEditor
-                    original={file.value}
-                    modified={pendingCode || ''}
-                    language={file.language}
-                    theme={`vs-${theme}`}
-                    options={{
-                        readOnly: false,
-                        renderSideBySide: true,
-                        minimap: { enabled: false },
-                        lineNumbers: 'on',
-                        scrollBeyondLastLine: false,
-                        wordWrap: 'on',
-                        diffWordWrap: 'on',
-                        fontSize: 14
-                    }}
-                    onMount={handleDiffEditorDidMount}
-                    controlButtons={true}
-                    onApply={applyChanges}
-                    onCancel={cancelChanges}
-                />
-            ) : (
-                <Editor 
-                    file={file} 
-                    onChange={debounce(onEditorChange, 500)} 
-                    options={{
-                        theme: `vs-${theme}`
-                    }}
-                    onMount={handleEditorDidMount}
-                />
-            )}
+            <Editor 
+                file={file} 
+                onChange={debounce(onEditorChange, 500)} 
+                options={{
+                    theme: `vs-${theme}`
+                }}
+                onMount={handleEditorDidMount}
+                isDiffMode={isDiffMode}
+                originalCode={file.value}
+                pendingCode={pendingCode || ''}
+                onApplyChanges={applyChanges}
+                onCancelChanges={cancelChanges}
+            />
         </div>
     );
 }
