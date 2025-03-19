@@ -3,7 +3,7 @@ import Editor from "./Editor";
 import FileNameList from "./FileNameList";
 import { PlaygroundContext } from "../../PlaygroundContext";
 import { debounce } from 'lodash-es';
-import { DiffEditor } from "@monaco-editor/react";
+import DiffEditor from "./DiffEditor";
 import * as monaco from 'monaco-editor';
 
 export default function CodeEditor() {
@@ -84,44 +84,26 @@ export default function CodeEditor() {
             <FileNameList/>
             
             {isDiffMode ? (
-                <div style={{ position: 'relative', height: '100%' }}>
-                    <DiffEditor
-                        original={file.value}
-                        modified={pendingCode || ''}
-                        language={file.language}
-                        theme={`vs-${theme}`}
-                        options={{
-                            readOnly: false,
-                            renderSideBySide: true,
-                            minimap: { enabled: false },
-                            lineNumbers: 'on',
-                            scrollBeyondLastLine: false,
-                            wordWrap: 'on',
-                            diffWordWrap: 'on',
-                            fontSize: 14
-                        }}
-                        onMount={handleDiffEditorDidMount}
-                        height="100%"
-                    />
-                    
-                    {/* 差异编辑器的控制按钮 */}
-                    <div className="diff-editor-controls">
-                        <button 
-                            className="diff-editor-apply" 
-                            onClick={applyChanges}
-                            title="确认应用这些更改"
-                        >
-                            确认更改
-                        </button>
-                        <button 
-                            className="diff-editor-cancel" 
-                            onClick={cancelChanges}
-                            title="放弃这些更改"
-                        >
-                            取消更改
-                        </button>
-                    </div>
-                </div>
+                <DiffEditor
+                    original={file.value}
+                    modified={pendingCode || ''}
+                    language={file.language}
+                    theme={`vs-${theme}`}
+                    options={{
+                        readOnly: false,
+                        renderSideBySide: true,
+                        minimap: { enabled: false },
+                        lineNumbers: 'on',
+                        scrollBeyondLastLine: false,
+                        wordWrap: 'on',
+                        diffWordWrap: 'on',
+                        fontSize: 14
+                    }}
+                    onMount={handleDiffEditorDidMount}
+                    controlButtons={true}
+                    onApply={applyChanges}
+                    onCancel={cancelChanges}
+                />
             ) : (
                 <Editor 
                     file={file} 

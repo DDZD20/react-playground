@@ -132,7 +132,7 @@ ${fileContext ? `\n\n当前正在编辑的文件内容:\n${fileContext}` : ''}`;
 
     try {
       const response = await this.chatCompletion(request);
-      const reader = response.body?.getReader();
+      const reader = response.body?.getReader();  // 获取响应流
       if (!reader) throw new Error('无法获取响应流');
 
       let accumulatedText = '';
