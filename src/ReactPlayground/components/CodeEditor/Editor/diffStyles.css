@@ -43,13 +43,20 @@
 
 /* 操作按钮容器 */
 .diff-action-widget {
-  display: flex;
+  display: none; /* 默认隐藏 */
   gap: 5px;
   z-index: 100;
   background: #f8f9fa;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   padding: 2px;
+  position: absolute;
+  right: 10px; /* 位于右侧 */
+}
+
+/* 显示时使用 flex 布局 */
+.diff-action-widget.visible {
+  display: flex;
 }
 
 /* 操作按钮共同样式 */

@@ -202,9 +202,8 @@ export default function Editor(props: Props) {
             widget.className = 'diff-action-widget';
             widget.style.position = 'absolute';
             widget.style.top = `${startPosition.top - 20}px`;
-            widget.style.left = `${startPosition.left}px`;
             widget.dataset.blockId = block.id;
-
+            
             // 创建Accept按钮
             const acceptBtn = document.createElement('button');
             acceptBtn.innerText = '接受';
@@ -225,6 +224,48 @@ export default function Editor(props: Props) {
                 widgetsRef.current.push(widget);
             }
         });
+
+        // 添加鼠标悬停事件处理
+        setupHoverListeners(editor, blocks);
+    };
+
+    // 设置鼠标悬停事件监听
+    const setupHoverListeners = (editor: monaco.editor.IStandaloneCodeEditor, blocks: DiffBlock[]) => {
+        if (!monacoRef.current || !editor) return;
+        
+        // 添加鼠标移动事件监听
+        const mouseMoveDisposable = editor.onMouseMove(e => {
+            // 获取当前鼠标位置所在行
+            const lineNumber = e.target.position?.lineNumber;
+            if (!lineNumber) return;
+            
+            // 更新控件位置和显示状态
+            blocks.forEach(block => {
+                if (block.type === 'unchanged') return;
+                
+                const widget = widgetsRef.current.find(w => w.dataset.blockId === block.id);
+                if (!widget) return;
+                
+                if (lineNumber >= block.startLine && lineNumber <= block.endLine) {
+                    // 鼠标在差异块上，显示控件
+                    widget.classList.add('visible');
+                    const startPosition = editor.getScrolledVisiblePosition({ lineNumber: block.startLine, column: 1 });
+                    if (startPosition) {
+                        widget.style.top = `${startPosition.top - 20}px`;
+                    }
+                } else {
+                    // 鼠标不在差异块上，隐藏控件
+                    widget.classList.remove('visible');
+                }
+            });
+        });
+        
+        // 添加到清理函数中
+        const oldCleanup = cleanupRef.current;
+        cleanupRef.current = () => {
+            oldCleanup();
+            mouseMoveDisposable.dispose();
+        };
     };
 
     // 更新控件位置
@@ -238,7 +279,6 @@ export default function Editor(props: Props) {
             if (!startPosition) return;
 
             widget.style.top = `${startPosition.top - 20}px`;
-            widget.style.left = `${startPosition.left}px`;
         });
     };
 
