@@ -41,6 +41,40 @@
   left: 2px;
 }
 
+/* 修改的代码行样式（既有添加又有删除） */
+.diff-modified-line {
+  background-color: rgba(255, 196, 0, 0.15);
+  border-left: 3px solid #ffc107;
+}
+
+/* 修改代码的左侧指示器 */
+.diff-modified-glyph::before {
+  content: "•";
+  color: #ffc107;
+  font-weight: bold;
+  position: absolute;
+  left: 2px;
+  font-size: 16px;
+}
+
+/* 对接受操作后的行样式 */
+.diff-accepted-line {
+  background-color: rgba(40, 167, 69, 0.1);
+  border-left: 3px solid #28a745;
+  text-decoration: none;
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+/* 对拒绝操作后的行样式 */
+.diff-rejected-line {
+  background-color: rgba(220, 53, 69, 0.05);
+  border-left: 3px solid #dc3545;
+  text-decoration: none;
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
 /* 操作按钮容器 */
 .diff-action-widget {
   display: none; /* 默认隐藏 */

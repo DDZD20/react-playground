@@ -18,7 +18,7 @@ export interface DiffBlock {
     startLine: number;
     endLine: number;
     content: string;
-    type: 'added' | 'removed' | 'unchanged';
+    type: 'added' | 'removed' | 'unchanged' | 'modified';
     decorationIds: string[];
 }
 
@@ -84,12 +84,16 @@ export default function Editor(props: Props) {
         const diffResult = diffLines(originalCode, modifiedCode);
         const blocks: DiffBlock[] = [];
         let lineNumber = 1;
+        
+        // 创建一个映射，记录每一行的类型，用于检测同一行的多重操作
+        const lineMap: Record<number, {type: 'added' | 'removed' | 'unchanged' | 'modified', content: string}> = {};
 
+        // 第一遍：收集所有行的操作信息
+        let currentLine = 1;
         diffResult.forEach((part: any) => {
             const lines = part.value.split('\n');
             const linesCount = part.value.endsWith('\n') ? lines.length - 1 : lines.length;
             
-            // 确定差异类型
             let type: 'added' | 'removed' | 'unchanged';
             if (part.added) {
                 type = 'added';
@@ -99,23 +103,77 @@ export default function Editor(props: Props) {
                 type = 'unchanged';
             }
 
-            // 只添加非空的差异块
+            // 记录每一行的操作类型
             if (linesCount > 0) {
-                blocks.push({
-                    id: generateId(),
-                    startLine: lineNumber,
-                    endLine: lineNumber + linesCount - 1,
-                    content: part.value,
-                    type,
-                    decorationIds: []
-                });
+                for (let i = 0; i < linesCount; i++) {
+                    // 移除的行不增加行号，可能与添加的行冲突
+                    const line = type === 'removed' ? currentLine : currentLine + i;
+                    
+                    // 检查是否已有该行的记录
+                    if (lineMap[line]) {
+                        // 如果已经有记录且类型不同，则标记为"修改"
+                        if (lineMap[line].type !== type && (type === 'added' || type === 'removed')) {
+                            lineMap[line] = { type: 'modified', content: lineMap[line].content + lines[i] };
+                        }
+                    } else {
+                        lineMap[line] = { type, content: lines[i] };
+                    }
+                }
             }
 
-            // 只有非移除的部分会影响当前行号
-            if (!part.removed) {
-                lineNumber += linesCount;
+            // 只有非移除的部分会影响行号计数
+            if (type !== 'removed') {
+                currentLine += linesCount;
             }
         });
+
+        // 第二遍：根据行映射创建差异块
+        let blockStart = -1;
+        let blockType: 'added' | 'removed' | 'unchanged' | 'modified' | null = null;
+        let blockContent = '';
+
+        // 处理所有行，合并相邻的相同类型行
+        for (let i = 1; i <= Object.keys(lineMap).length; i++) {
+            if (!lineMap[i]) continue;
+            
+            const { type, content } = lineMap[i];
+            
+            // 如果当前块为空或与前一个块类型相同，则继续当前块
+            if (blockType === null || blockType === type) {
+                if (blockStart === -1) blockStart = i;
+                blockType = type;
+                blockContent += content + '\n';
+            } else {
+                // 否则完成当前块并开始新块
+                if (blockStart !== -1 && blockType) {
+                    blocks.push({
+                        id: generateId(),
+                        startLine: blockStart,
+                        endLine: i - 1,
+                        content: blockContent,
+                        type: blockType,
+                        decorationIds: []
+                    });
+                }
+                
+                // 开始新块
+                blockStart = i;
+                blockType = type;
+                blockContent = content + '\n';
+            }
+        }
+        
+        // 添加最后一个块
+        if (blockStart !== -1 && blockType) {
+            blocks.push({
+                id: generateId(),
+                startLine: blockStart,
+                endLine: Object.keys(lineMap).length,
+                content: blockContent,
+                type: blockType,
+                decorationIds: []
+            });
+        }
 
         return blocks;
     };
@@ -125,6 +183,16 @@ export default function Editor(props: Props) {
         if (!editor || !monaco) return;
 
         // 清除现有装饰器
+        const model = editor.getModel();
+        if (!model) return;
+        
+        // 获取并清除所有现有装饰器
+        const oldDecorations = editor.getModel()?.getAllDecorations() || [];
+        const oldDecorationIds = oldDecorations.map(d => d.id);
+        if (oldDecorationIds.length > 0) {
+            editor.deltaDecorations(oldDecorationIds, []);
+        }
+
         const decorations: monaco.editor.IModelDeltaDecoration[] = [];
 
         // 为每个差异块创建装饰器
@@ -156,6 +224,16 @@ export default function Editor(props: Props) {
                         isWholeLine: true,
                         className: 'diff-removed-line',
                         glyphMarginClassName: 'diff-removed-glyph',
+                        zIndex: 1
+                    }
+                });
+            } else if (block.type === 'modified') {
+                decorations.push({
+                    range,
+                    options: {
+                        isWholeLine: true,
+                        className: 'diff-modified-line',
+                        glyphMarginClassName: 'diff-modified-glyph',
                         zIndex: 1
                     }
                 });
@@ -287,6 +365,21 @@ export default function Editor(props: Props) {
         const model = editor.getModel();
         if (!model || !monacoRef.current) return;
 
+        // 清除块相关的所有装饰器
+        editor.deltaDecorations(block.decorationIds, []);
+        
+        // 移除可能的重叠装饰器
+        const allDecorations = editor.getModel()?.getDecorationsInRange({
+            startLineNumber: block.startLine,
+            startColumn: 1,
+            endLineNumber: block.endLine,
+            endColumn: model.getLineMaxColumn(block.endLine)
+        }) || [];
+        
+        if (allDecorations.length > 0) {
+            editor.deltaDecorations(allDecorations.map(d => d.id), []);
+        }
+
         // 根据差异类型执行不同的操作
         if (block.type === 'removed') {
             // 接受删除 - 需要从编辑器中删除这段代码
@@ -312,20 +405,66 @@ export default function Editor(props: Props) {
                     return b;
                 }).filter(b => b.id !== block.id)
             );
-        } else {
-            // 接受添加 - 不需要做什么，因为代码已经存在
-            // 只需从差异列表中移除该块
+        } else if (block.type === 'added' || block.type === 'modified') {
+            // 接受添加或修改 - 应用临时"接受"样式
+            const range = new monacoRef.current.Range(
+                block.startLine,
+                1,
+                block.endLine,
+                1
+            );
+            
+            // 应用接受后的样式
+            const newDecorationIds = editor.deltaDecorations([], [{
+                range,
+                options: {
+                    isWholeLine: true,
+                    className: 'diff-accepted-line',
+                    zIndex: 1
+                }
+            }]);
+            
+            // 从差异列表中移除该块
             setDiffBlocks(prev => prev.filter(b => b.id !== block.id));
+            
+            // 延迟后清除样式
+            setTimeout(() => {
+                editor.deltaDecorations(newDecorationIds, []);
+            }, 1000);
         }
 
-        // 移除该块的装饰器
-        editor.deltaDecorations(block.decorationIds, []);
+        // 移除对应的控件
+        const widget = widgetsRef.current.find(w => w.dataset.blockId === block.id);
+        if (widget && widget.parentElement) {
+            widget.parentElement.removeChild(widget);
+            widgetsRef.current = widgetsRef.current.filter(w => w.dataset.blockId !== block.id);
+        }
+
+        // 通知UI刷新
+        if (editorRef.current) {
+            editorRef.current.layout();
+        }
     };
 
     // 处理拒绝差异块
     const handleReject = (editor: monaco.editor.IStandaloneCodeEditor, block: DiffBlock) => {
         const model = editor.getModel();
         if (!model || !monacoRef.current) return;
+
+        // 清除块相关的所有装饰器
+        editor.deltaDecorations(block.decorationIds, []);
+        
+        // 移除可能的重叠装饰器
+        const allDecorations = editor.getModel()?.getDecorationsInRange({
+            startLineNumber: block.startLine,
+            startColumn: 1,
+            endLineNumber: block.endLine,
+            endColumn: model.getLineMaxColumn(block.endLine)
+        }) || [];
+        
+        if (allDecorations.length > 0) {
+            editor.deltaDecorations(allDecorations.map(d => d.id), []);
+        }
 
         // 根据差异类型执行不同的操作
         if (block.type === 'added') {
@@ -352,19 +491,59 @@ export default function Editor(props: Props) {
                     return b;
                 }).filter(b => b.id !== block.id)
             );
-        } else {
-            // 拒绝删除 - 不需要做什么，因为我们保留了原始代码
-            // 只需从差异列表中移除该块
+        } else if (block.type === 'removed' || block.type === 'modified') {
+            // 拒绝删除或修改 - 应用临时"拒绝"样式
+            const range = new monacoRef.current.Range(
+                block.startLine,
+                1,
+                block.endLine,
+                1
+            );
+            
+            // 应用拒绝后的样式
+            const newDecorationIds = editor.deltaDecorations([], [{
+                range,
+                options: {
+                    isWholeLine: true,
+                    className: 'diff-rejected-line',
+                    zIndex: 1
+                }
+            }]);
+            
+            // 从差异列表中移除该块
             setDiffBlocks(prev => prev.filter(b => b.id !== block.id));
+            
+            // 延迟后清除样式
+            setTimeout(() => {
+                editor.deltaDecorations(newDecorationIds, []);
+            }, 1000);
         }
 
-        // 移除该块的装饰器
-        editor.deltaDecorations(block.decorationIds, []);
+        // 移除对应的控件
+        const widget = widgetsRef.current.find(w => w.dataset.blockId === block.id);
+        if (widget && widget.parentElement) {
+            widget.parentElement.removeChild(widget);
+            widgetsRef.current = widgetsRef.current.filter(w => w.dataset.blockId !== block.id);
+        }
+
+        // 通知UI刷新
+        if (editorRef.current) {
+            editorRef.current.layout();
+        }
     };
 
     // 初始化差异编辑模式
     const initializeDiffMode = () => {
         if (!editorRef.current || !monacoRef.current || !isDiffMode) return;
+
+        // 先清除所有现有装饰器
+        const model = editorRef.current.getModel();
+        if (model) {
+            const oldDecorations = model.getAllDecorations();
+            if (oldDecorations.length > 0) {
+                editorRef.current.deltaDecorations(oldDecorations.map(d => d.id), []);
+            }
+        }
 
         // 计算差异并应用到编辑器
         const blocks = calculateDiff(originalCode, pendingCode);
@@ -398,9 +577,11 @@ export default function Editor(props: Props) {
             widgetsRef.current = [];
             
             // 清除所有装饰器
-            if (editorRef.current) {
-                const allDecorationIds = diffBlocks.flatMap(block => block.decorationIds);
-                editorRef.current.deltaDecorations(allDecorationIds, []);
+            if (editorRef.current && editorRef.current.getModel()) {
+                const allDecorations = editorRef.current.getModel()!.getAllDecorations();
+                if (allDecorations.length > 0) {
+                    editorRef.current.deltaDecorations(allDecorations.map(d => d.id), []);
+                }
             }
         };
 
