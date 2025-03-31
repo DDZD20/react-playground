@@ -5,52 +5,162 @@
     height: 38px;
     overflow-x: auto;
     overflow-y: hidden;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     box-sizing: border-box;
 
     color: var(--text);
     background-color: var(--bg);
 
     &::-webkit-scrollbar {
-        height: 1px;
+        height: 2px;
     }
 
     &::-webkit-scrollbar-track {
-        background-color: #ddd;
+        background-color: rgba(221, 221, 221, 0.1);
     }
 
     &::-webkit-scrollbar-thumb {
-        background-color: #ddd;
+        background-color: rgba(120, 120, 120, 0.3);
+        border-radius: 2px;
     }
 
     .tab-item {
         display: inline-flex;
-        padding: 8px 10px 6px;
+        padding: 8px 14px 6px;
         font-size: 13px;
         line-height: 20px;
         cursor: pointer;
         align-items: center;
         border-bottom: 3px solid transparent;
+        margin-right: 2px;
+        transition: all 0.2s ease;
+        position: relative;
+
+        &:hover {
+            background-color: rgba(74, 136, 255, 0.05);
+            
+            // 关闭按钮悬停效果
+            span svg {
+                opacity: 0.8;
+                
+                line {
+                    stroke: #4a88ff;
+                }
+            }
+        }
 
         &.actived {
-            color: skyblue;
-            border-bottom: 3px solid skyblue;
+            color: #4a88ff;
+            border-bottom: 3px solid #4a88ff;
+            background-color: rgba(74, 136, 255, 0.08);
+            
+            span svg {
+                line {
+                    stroke: #4a88ff;
+                }
+            }
         }
 
         &:first-child {
             cursor: text;
+            font-weight: 500;
+        }
+        
+        // 文件图标样式
+        .fileIcon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 6px;
+            
+            svg {
+                filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.1));
+            }
+        }
+        
+        // 关闭按钮样式
+        span[style*="display: flex"] {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            margin-left: 8px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            
+            &:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+            }
+            
+            svg {
+                opacity: 0.5;
+                transition: opacity 0.2s ease;
+                
+                line {
+                    transition: stroke 0.2s ease;
+                }
+            }
         }
     }
 }
 
-.tabs-item-input {
-    width: 90px;
-    padding: 4px 0 4px 10px;
-    font-size: 13px;
+.add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    margin-left: 4px;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.7;
+    color: var(--text);
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    
+    &:hover {
+        opacity: 1;
+        background-color: rgba(74, 136, 255, 0.1);
+        color: #4a88ff;
+    }
+}
 
-    color: #444;
-    background-color: #ddd;
-    border: 1px solid #ddd;
+.tabs-item-input {
+    width: 100px;
+    padding: 4px 8px;
+    font-size: 13px;
+    color: var(--text);
+    background-color: rgba(30, 30, 30, 0.3);
+    border: 1px solid rgba(74, 136, 255, 0.3);
     border-radius: 4px;
     outline: none;
+    transition: all 0.2s ease;
+    
+    &:focus {
+        border-color: rgba(74, 136, 255, 0.8);
+        box-shadow: 0 0 0 2px rgba(74, 136, 255, 0.2);
+    }
+}
+
+// 亮色模式特定样式
+:global(.light) {
+    .tabs {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        
+        .tab-item {
+            &.actived {
+                background-color: rgba(74, 136, 255, 0.05);
+            }
+            
+            .fileIcon svg {
+                filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.05));
+            }
+        }
+    }
+    
+    .tabs-item-input {
+        background-color: rgba(240, 240, 240, 0.8);
+        color: #333;
+    }
 }
