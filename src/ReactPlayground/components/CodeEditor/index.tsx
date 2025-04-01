@@ -4,6 +4,9 @@ import FileNameList from "./FileNameList";
 import { PlaygroundContext } from "../../PlaygroundContext";
 import { debounce } from 'lodash-es';
 import * as monaco from 'monaco-editor';
+import { Button, Tooltip, Switch } from 'antd';
+import { PlayCircleOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import styles from './styles.module.scss';
 
 export default function CodeEditor() {
     const { 
@@ -13,7 +16,12 @@ export default function CodeEditor() {
         selectedFileName,
         isDiffMode,
         pendingCode,
-        setDiffMode
+        setDiffMode,
+        autoCompile,
+        setAutoCompile,
+        needsCompile,
+        setNeedsCompile,
+        compileCode
     } = useContext(PlaygroundContext);
 
     const file = files[selectedFileName];
@@ -24,7 +32,15 @@ export default function CodeEditor() {
     function onEditorChange(value?: string) {
         if (!isDiffMode) {
             files[file.name].value = value!;
+            // 只更新文件内容，不触发编译
             setFiles({ ...files });
+            
+            // 如果开启了自动编译，则直接编译；否则标记为需要编译
+            if (autoCompile) {
+                compileCode();
+            } else {
+                setNeedsCompile(true);
+            }
         }
     }
     
@@ -64,6 +80,9 @@ export default function CodeEditor() {
                         }
                     });
                 }
+                
+                // 标记为需要编译
+                setNeedsCompile(true);
             }, 50); // 短暂延迟以确保编辑器挂载
         }
     };
@@ -73,24 +92,65 @@ export default function CodeEditor() {
         // 直接退出差异模式，不应用更改
         setDiffMode(false, null);
     };
+    
+    // 处理自动编译开关切换
+    const handleAutoCompileToggle = (checked: boolean) => {
+        setAutoCompile(checked);
+        // 如果打开自动编译且当前有需要编译的代码，立即编译
+        if (checked && needsCompile) {
+            compileCode();
+        }
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <FileNameList/>
             
-            <Editor 
-                file={file} 
-                onChange={debounce(onEditorChange, 500)} 
-                options={{
-                    theme: `vs-${theme}`
-                }}
-                onMount={handleEditorDidMount}
-                isDiffMode={isDiffMode}
-                originalCode={file.value}
-                pendingCode={pendingCode || ''}
-                onApplyChanges={applyChanges}
-                onCancelChanges={cancelChanges}
-            />
+            <div className={styles.editorContainer}>
+                <Editor 
+                    file={file} 
+                    onChange={debounce(onEditorChange, 500)} 
+                    options={{
+                        theme: `vs-${theme}`
+                    }}
+                    onMount={handleEditorDidMount}
+                    isDiffMode={isDiffMode}
+                    originalCode={file.value}
+                    pendingCode={pendingCode || ''}
+                    onApplyChanges={applyChanges}
+                    onCancelChanges={cancelChanges}
+                />
+                
+                {/* 底部工具栏 */}
+                <div className={styles.editorToolbar}>
+                    <div className={styles.toolbarLeft}>
+                        <Tooltip title={autoCompile ? "自动编译已启用" : "自动编译已禁用"}>
+                            <span className={styles.autoCompileToggle}>
+                                <ThunderboltOutlined className={autoCompile ? styles.active : ''} />
+                                <Switch 
+                                    size="small" 
+                                    checked={autoCompile} 
+                                    onChange={handleAutoCompileToggle}
+                                    className={styles.compileSwitch}
+                                />
+                                <span className={styles.toggleLabel}>自动编译</span>
+                            </span>
+                        </Tooltip>
+                    </div>
+                    
+                    <div className={styles.toolbarRight}>
+                        <Button 
+                            type="primary" 
+                            icon={<PlayCircleOutlined />}
+                            onClick={compileCode}
+                            className={needsCompile ? styles.needsCompile : ''}
+                            disabled={autoCompile && !needsCompile}
+                        >
+                            编译并运行
+                        </Button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

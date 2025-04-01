@@ -61,6 +61,7 @@
   display: flex;
   align-items: flex-start;
   border-bottom: 1px solid rgba(128, 128, 128, 0.1);
+  font-size: 13px;
   
   &:hover {
     background-color: rgba(128, 128, 128, 0.05);
@@ -89,11 +90,31 @@
   color: rgba(128, 128, 128, 0.7);
   margin-right: 10px;
   font-size: 0.9em;
-  min-width: 70px;
+  min-width: 110px;
+  user-select: none;
 }
 
 .logContent {
   flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.statusBar {
+  display: flex;
+  padding: 4px 12px;
+  font-size: 12px;
+  border-top: 1px solid rgba(128, 128, 128, 0.2);
+  background-color: rgba(0, 0, 0, 0.05);
+  color: rgba(128, 128, 128, 0.9);
+}
+
+.statusItem {
+  margin-right: 16px;
+  
+  &:last-child {
+    margin-right: 0;
+  }
 }
 
 :global(.light) {
@@ -109,5 +130,9 @@
     &.error {
       background-color: rgba(231, 76, 60, 0.05);
     }
+  }
+  
+  .statusBar {
+    background-color: rgba(0, 0, 0, 0.03);
   }
 } 

@@ -13,53 +13,114 @@
 }
 
 #root {
+  width: 100%;
   max-width: 1280px;
+  min-height: 100vh;
   padding: 2rem;
   margin: 0 auto;
-  text-align: center;
+  box-sizing: border-box;
 }
 
 body {
-  display: flex;
-  min-width: 320px;
-  min-height: 100vh;
   margin: 0;
-  place-items: center;
+  padding: 0;
 }
 
-h1 {
-  font-size: 3.2em;
+/* 应用容器 */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 4rem);
+}
+
+/* 标题区域 */
+header {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 2.4rem;
   line-height: 1.1;
+  margin: 0;
 }
 
-button {
-  padding: 0.6em 1.2em;
-  font-family: inherit;
-  font-size: 1em;
-  font-weight: 500;
-  cursor: pointer;
-  background-color: #1a1a1a;
-  border: 1px solid transparent;
+/* 主要内容区域 */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+/* 解决方案区域 */
+.solution-container {
+  width: 100%;
+  min-height: 400px;
+  padding: 2rem;
   border-radius: 8px;
-  transition: border-color 0.25s;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  box-sizing: border-box;
 }
 
-button:hover {
-  border-color: #646cff;
+/* 占位内容 */
+.placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-height: 300px;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  font-size: 1.2rem;
 }
 
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+/* 底部提示 */
+footer {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+footer p {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .solution-container {
+    padding: 1rem;
+  }
+}
+
+/* 亮色主题 */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
     background-color: #fff;
   }
-
-  button {
-    background-color: #f9f9f9;
+  
+  .solution-container {
+    background-color: rgba(0, 0, 0, 0.03);
+    border: 1px dashed rgba(0, 0, 0, 0.2);
+  }
+  
+  .placeholder {
+    color: rgba(0, 0, 0, 0.4);
+  }
+  
+  footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  footer p {
+    color: rgba(0, 0, 0, 0.6);
   }
 }
