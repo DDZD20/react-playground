@@ -1,9 +1,9 @@
-import ReactPlayground from './ReactPlayground';
+import ReactPlayground from './CodeVerify';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import HomePage from './ReactPlayground/components/HomePage';
+import HomePage from './CodeVerify/components/HomePage';
 
 import './App.scss';
-import { PlaygroundProvider } from './ReactPlayground/PlaygroundContext';
+import { PlaygroundProvider } from './CodeVerify/PlaygroundContext';
 
 function App() {
   return (

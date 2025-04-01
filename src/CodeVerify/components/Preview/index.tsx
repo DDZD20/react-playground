@@ -2,7 +2,6 @@ import { useContext, useEffect, useRef, useState } from "react";
 import { PlaygroundContext } from "../../PlaygroundContext";
 import iframeRaw from "./iframe.html?raw";
 import { IMPORT_MAP_FILE_NAME } from "../../files";
-import { Message } from "../Message";
 import CompilerWorker from "./compiler.worker?worker";
 
 interface MessageData {
@@ -17,7 +16,6 @@ interface MessageData {
 export default function Preview() {
   const { files, autoCompile, addConsoleLog, forceCompileCounter } = useContext(PlaygroundContext);
   const [compiledCode, setCompiledCode] = useState("");
-  const [error, setError] = useState("");
   const [isCompiling, setIsCompiling] = useState(false);
 
   const compilerWorkerRef = useRef<Worker>();
@@ -93,8 +91,7 @@ export default function Preview() {
     const { type, message, logType, content } = msg.data;
     
     if (type === "ERROR") {
-      setError(message || "未知错误");
-      // 同时将错误添加到控制台日志
+      // 将错误添加到控制台日志
       if (message) {
         addConsoleLog({
           type: 'error',
@@ -154,13 +151,6 @@ export default function Preview() {
           border: "none",
         }}
       />
-      <Message type="error" content={error} />
-
-      {/* <Editor file={{
-            name: 'dist.js',
-            value: compiledCode,
-            language: 'javascript'
-        }}/> */}
     </div>
   );
 }
