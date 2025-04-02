@@ -55,7 +55,7 @@ export class ChatService {
   private userId: string;
   private username: string;
   private connected: boolean = false;
-  private reconnectAttempts: number = 0;
+//   private reconnectAttempts: number = 0;
   private readonly maxReconnectAttempts: number = 5;
   
   // 回调函数存储

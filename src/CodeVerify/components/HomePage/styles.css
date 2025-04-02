@@ -3,8 +3,8 @@
 
 /* 主页容器 */
 .home-container {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100vh; /* 设置回100vh，因为Header已经是绝对定位不占空间 */
   overflow: hidden;
   position: relative;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;

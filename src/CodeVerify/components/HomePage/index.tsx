@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCodeBackground } from './useCodeBackground';
 import { AuthContainer } from '../Auth';
 import './styles.css';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { canvasRef, isLoaded } = useCodeBackground();
   
   // 添加认证状态
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  
+  // 检查是否从头像点击过来需要显示登录框
+  useEffect(() => {
+    // 检查location.state中是否有showAuth属性
+    if (location.state && location.state.showAuth) {
+      setShowAuth(true);
+      // 清除状态，避免刷新页面时重复显示
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
   
   // 处理开始按钮点击
   const handleStart = () => {

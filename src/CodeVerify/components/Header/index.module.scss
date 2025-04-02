@@ -128,10 +128,64 @@
         }
       }
     }
+
+    .userAvatar {
+      cursor: pointer;
+      margin-left: 15px;
+      box-shadow: 0 0 0 2px rgba(74, 136, 255, 0.2);
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 2px rgba(74, 136, 255, 0.5);
+      }
+    }
+}
+
+/* 首页专用的Header样式 */
+.homepageHeader {
+  background-color: #0c0f18; /* 暗色背景 */
+  border-bottom: none; /* 移除边框 */
+  position: absolute; /* 绝对定位，覆盖在首页内容上方 */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  
+  .logo {
+    .title {
+      filter: drop-shadow(0 0 6px rgba(74, 136, 255, 0.7));
+    }
+    
+    .subtitle {
+      color: #a3b2cc;
+    }
+  }
+  
+  .links {
+    margin-right: 20px; /* 减小右侧间距，因为元素更少 */
+  }
 }
 
 :global(.light) {
   .header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  /* 即使在亮色模式下，首页的Header也保持暗色 */
+  .homepageHeader {
+    background-color: #0c0f18;
+    border-bottom: none;
+    
+    .title {
+      background: linear-gradient(90deg, #4a88ff, #7f69f8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .subtitle {
+      color: #a3b2cc;
+    }
   }
 }

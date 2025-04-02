@@ -1,25 +1,84 @@
 import styles from './index.module.scss'
 
-import { useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useContext, useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PlaygroundContext } from '../../PlaygroundContext';
-import { DownloadOutlined, MoonOutlined, ShareAltOutlined, SunOutlined } from '@ant-design/icons';
-import { message } from 'antd';
+import { DownloadOutlined, MoonOutlined, ShareAltOutlined, SunOutlined, UserOutlined } from '@ant-design/icons';
+import { message, Avatar } from 'antd';
 import copy from 'copy-to-clipboard';
 import { downloadFiles } from '../../utils';
 import ModelSelector from './ModelSelector';
+import { getCurrentUser } from '../../../api/user';
+import { User } from '../../../api/types';
 
 export default function Header() {
   const { files, theme, setTheme} = useContext(PlaygroundContext)
   const navigate = useNavigate();
+  const location = useLocation(); // 获取当前路径信息
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
+  
+  // 检查是否在首页
+  const isHomePage = location.pathname === '/';
   
   // 跳转到主页
   const goToHomePage = () => {
     navigate('/');
   };
 
+  // 处理头像点击事件
+  const handleAvatarClick = () => {
+    if (user) {
+      // 已登录，直接进入个人中心
+      navigate('/user');
+    } else {
+      // 未登录，进入登录页面
+      navigate('/', { state: { showAuth: true } });
+    }
+  };
+
+  // 获取用户信息
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        const response = await getCurrentUser();
+        if (response.success && response.data) {
+          setUser(response.data);
+        }
+      } catch (error) {
+        console.error('获取用户信息失败:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  // 根据用户名生成随机颜色作为头像背景色
+  const getColorFromName = (name: string): string => {
+    if (!name) return '#1677ff';
+    
+    // 基于用户名生成一个简单的哈希值
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    // 转换为HSL色彩空间颜色，固定饱和度和亮度，只变化色相
+    const hue = Math.abs(hash % 360);
+    return `hsl(${hue}, 70%, 50%)`;
+  };
+
+  // 获取用户名首字母作为头像显示
+  const getAvatarText = (name: string): string => {
+    if (!name) return '?';
+    return name.charAt(0).toUpperCase();
+  };
+
   return (
-    <div className={styles.header}>
+    <div className={`${styles.header} ${isHomePage ? styles.homepageHeader : ''}`}>
       <div className={styles.logo} onClick={goToHomePage}>
         <div className={styles.logoShield}>
           <div className={styles.shieldIcon}>
@@ -40,35 +99,68 @@ export default function Header() {
         </div>
       </div>
       <div className={styles.links}>
-        {theme === 'light' && (
-          <MoonOutlined
-            title='切换暗色主题'
-            className={styles.theme}
-            onClick={() => setTheme('dark')}
+        {/* 只在非首页显示主题切换按钮 */}
+        {!isHomePage && (
+          <>
+            {theme === 'light' && (
+              <MoonOutlined
+                title='切换暗色主题'
+                className={styles.theme}
+                onClick={() => setTheme('dark')}
+              />
+            )}
+            {theme === 'dark' && (
+              <SunOutlined
+                title='切换亮色主题'
+                className={styles.theme}
+                onClick={() => setTheme('light')}
+              />
+            )}
+            <ShareAltOutlined 
+              title='分享链接'
+              onClick={() => {
+                copy(window.location.href);
+                message.success('分享链接已复制。')
+              }}
+            />
+            <DownloadOutlined 
+              title='下载代码'
+              onClick={async () => {
+                await downloadFiles(files);
+                message.success('下载完成')
+              }}
+            />
+            <ModelSelector />
+          </>
+        )}
+        
+        {/* 用户头像 - 点击直接进入个人中心或登录页面 */}
+        {user ? (
+          user.avatar ? (
+            <Avatar 
+              src={user.avatar} 
+              className={styles.userAvatar}
+              onClick={handleAvatarClick}
+            />
+          ) : (
+            <Avatar 
+              style={{ 
+                backgroundColor: getColorFromName(user.username),
+                cursor: 'pointer'
+              }} 
+              className={styles.userAvatar}
+              onClick={handleAvatarClick}
+            >
+              {getAvatarText(user.username)}
+            </Avatar>
+          )
+        ) : (
+          <Avatar 
+            icon={<UserOutlined />} 
+            className={styles.userAvatar} 
+            onClick={handleAvatarClick}
           />
         )}
-        {theme === 'dark' && (
-          <SunOutlined
-            title='切换亮色主题'
-            className={styles.theme}
-            onClick={() => setTheme('light')}
-          />
-        )}
-        <ShareAltOutlined 
-          title='分享链接'
-          onClick={() => {
-            copy(window.location.href);
-            message.success('分享链接已复制。')
-          }}
-        />
-        <DownloadOutlined 
-          title='下载代码'
-          onClick={async () => {
-            await downloadFiles(files);
-            message.success('下载完成')
-          }}
-        />
-        <ModelSelector />
       </div>
     </div>
   )

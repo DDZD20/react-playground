@@ -2,3 +2,16 @@
   margin: 0;
   padding: 0;
 }
+
+.content-container {
+  width: 100%;
+  min-height: calc(100vh - 50px); /* 50px是Header的高度 */
+  padding-top: 0;
+  box-sizing: border-box;
+}
+
+/* 首页内容区域样式 */
+.home-content {
+  min-height: 100vh; /* 首页内容应该占满整个视口高度 */
+  padding-top: 0;
+}

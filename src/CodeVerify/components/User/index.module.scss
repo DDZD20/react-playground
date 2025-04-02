@@ -1,0 +1,42 @@
+.userPageContainer {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.loadingContainer, 
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+  text-align: center;
+}
+
+.tabs {
+  :global(.ant-tabs-nav) {
+    margin-bottom: 24px;
+  }
+}
+
+.comingSoon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.45);
+  
+  h2 {
+    margin-bottom: 16px;
+  }
+}
+
+// 暗色模式适配
+:global(.dark) {
+  .comingSoon {
+    color: rgba(255, 255, 255, 0.45);
+  }
+} 

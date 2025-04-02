@@ -1,0 +1,108 @@
+.settingsContainer {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.settingsCard {
+  margin-bottom: 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 0;
+}
+
+.avatarUpload {
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.uploadContainer {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  
+  &:hover .uploadOverlay {
+    opacity: 1;
+  }
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1677ff;
+  color: white;
+  font-size: 48px;
+  font-weight: bold;
+}
+
+.uploadOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s;
+  
+  span {
+    margin-top: 8px;
+    font-size: 14px;
+  }
+}
+
+.uploadTip {
+  text-align: center;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+
+.sectionTitle {
+  margin-top: 24px;
+}
+
+.select {
+  width: 100%;
+  height: 32px;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  padding: 0 11px;
+}
+
+// 暗色模式适配
+:global(.dark) {
+  .uploadTip {
+    color: rgba(255, 255, 255, 0.45);
+  }
+  
+  .settingsCard {
+    background-color: #1f1f1f;
+  }
+  
+  .select {
+    background-color: #141414;
+    color: rgba(255, 255, 255, 0.85);
+    border-color: #434343;
+  }
+} 
