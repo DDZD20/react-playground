@@ -13,6 +13,12 @@ import {
   RegisterRequest, 
   ApiResponse 
 } from './types';
+import { mockLogin, mockRegister, TEST_USER } from './mockData';
+
+// 是否为开发模式
+const IS_DEV = import.meta.env.DEV;
+// 是否使用模拟数据（仅在开发模式下可用）
+const USE_MOCK_DATA = IS_DEV && true; // 设置为true启用本地测试账号
 
 /**
  * 用户登录
@@ -45,6 +51,41 @@ import {
  * }
  */
 export const login = async (data: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
+  // 使用测试账号登录（开发模式）
+  if (USE_MOCK_DATA) {
+    console.log('使用测试账号登录模式', data);
+    const mockResponse = mockLogin(data.username, data.password);
+    
+    if (mockResponse.success && mockResponse.data) {
+      // 保存mock token
+      apiService.setAuthToken(mockResponse.token as string);
+      localStorage.setItem('refreshToken', mockResponse.token as string);
+      
+      // 构造登录响应格式
+      return {
+        code: 200,
+        success: true,
+        message: '登录成功（测试模式）',
+        data: {
+          token: mockResponse.token as string,
+          user: mockResponse.data
+        }
+      };
+    }
+    
+    // 错误响应需要提供空的LoginResponse对象
+    return {
+      code: 401,
+      success: false,
+      message: mockResponse.message || '用户名或密码错误',
+      data: {
+        token: '',
+        user: {} as User // 类型断言为空用户对象
+      }
+    };
+  }
+  
+  // 使用真实API登录
   const response = await apiService.post<ApiResponse<LoginResponse>>(
     API_ENDPOINTS.AUTH.LOGIN, 
     data
@@ -90,6 +131,32 @@ export const login = async (data: LoginRequest): Promise<ApiResponse<LoginRespon
  * }
  */
 export const register = async (data: RegisterRequest): Promise<ApiResponse<User>> => {
+  // 使用测试账号注册（开发模式）
+  if (USE_MOCK_DATA) {
+    console.log('使用测试账号注册模式', data);
+    const mockResponse = mockRegister(data.username, data.email, data.password);
+    
+    if (!mockResponse.success) {
+      return {
+        code: 400,
+        success: false,
+        message: mockResponse.message || '注册失败',
+        data: {} as User // 类型断言为空用户对象
+      };
+    }
+    
+    // 确保有数据
+    if (mockResponse.data) {
+      return {
+        code: 201,
+        success: true,
+        message: '注册成功（测试模式）',
+        data: mockResponse.data
+      };
+    }
+  }
+  
+  // 使用真实API注册
   return await apiService.post<ApiResponse<User>>(
     API_ENDPOINTS.AUTH.REGISTER, 
     data
@@ -122,6 +189,30 @@ export const register = async (data: RegisterRequest): Promise<ApiResponse<User>
  * }
  */
 export const getCurrentUser = async (): Promise<ApiResponse<User>> => {
+  // 开发模式：检查是否有mock token
+  if (USE_MOCK_DATA) {
+    // 从localStorage获取token
+    const token = localStorage.getItem('refreshToken');
+    if (token === 'mock-jwt-token-for-development') {
+      console.log('返回测试用户信息');
+      return {
+        code: 200,
+        success: true,
+        message: '获取用户信息成功（测试模式）',
+        data: {
+          id: '1',
+          username: TEST_USER.username,
+          email: TEST_USER.email,
+          avatar: 'https://avatars.githubusercontent.com/u/1',
+          role: 'user',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      };
+    }
+  }
+  
+  // 使用真实API获取用户信息
   return await apiService.get<ApiResponse<User>>(API_ENDPOINTS.AUTH.CURRENT_USER);
 };
 

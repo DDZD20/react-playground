@@ -1,20 +1,64 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCodeBackground } from './useCodeBackground';
+import { AuthContainer } from '../Auth';
 import './styles.css';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { canvasRef, isLoaded } = useCodeBackground();
   
+  // 添加认证状态
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
+  
   // 处理开始按钮点击
   const handleStart = () => {
-    navigate('/playground');
+    // 如果未登录，显示认证页面
+    if (!isAuthenticated) {
+      setShowAuth(true);
+    } else {
+      // 已登录，直接进入应用
+      navigate('/playground');
+    }
+  };
+  
+  // 处理认证成功
+  const handleAuthSuccess = (isLogin: boolean) => {
+    setIsAuthenticated(true);
+    setShowAuth(false);
+    
+    // 可以根据是登录还是注册进行不同的处理
+    console.log(isLogin ? '用户已登录' : '用户已注册并登录');
+    
+    // 延迟跳转到应用页面，给用户一些视觉反馈时间
+    setTimeout(() => {
+      navigate('/playground');
+    }, 500);
+  };
+  
+  // 关闭认证页面
+  const handleCloseAuth = () => {
+    setShowAuth(false);
   };
 
   return (
     <div className="home-container">
       <canvas ref={canvasRef} className="code-background"></canvas>
+      
+      {/* 认证页面 */}
+      {showAuth && (
+        <div className="auth-overlay">
+          <div className="auth-modal">
+            <button className="close-button" onClick={handleCloseAuth}>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="currentColor" />
+              </svg>
+            </button>
+            <AuthContainer onAuthSuccess={handleAuthSuccess} />
+          </div>
+        </div>
+      )}
       
       <div className={`content-wrapper ${isLoaded ? 'loaded' : ''}`}>
         <div className="logo-container">
@@ -68,7 +112,7 @@ const HomePage: React.FC = () => {
         </div>
         
         <button className="start-button" onClick={handleStart}>
-          <span className="start-text">开始体验</span>
+          <span className="start-text">{isAuthenticated ? '进入工作区' : '开始体验'}</span>
           <span className="start-icon">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z" fill="currentColor" />
