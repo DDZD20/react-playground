@@ -1,97 +1,184 @@
-import React, { useState } from 'react';
-import { Input, Button, Avatar } from 'antd';
-import { SendOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useRef } from 'react';
+import { Input, Button, Avatar, Spin, message } from 'antd';
+import { SendOutlined, UserOutlined } from '@ant-design/icons';
 import styles from './styles.module.scss';
-
-interface Message {
-  id: number;
-  sender: 'interviewer' | 'candidate';
-  content: string;
-  timestamp: string;
-}
+import { 
+  initializeInterviewChat, 
+  getInterviewMessages, 
+  sendInterviewMessage,
+  subscribeToInterviewMessages,
+  onChatConnectionChange,
+  closeInterviewChat
+} from '../../../api/textChat';
+import { ChatMessage } from '../../../api/types';
+import { formatTime } from '../../utils';
 
 interface ChatProps {
-  // 后续可添加实际功能需要的props
+  interviewId: string;
+  interviewerName?: string;
 }
 
-const Chat: React.FC<ChatProps> = () => {
+const Chat: React.FC<ChatProps> = ({ 
+  interviewId, 
+  interviewerName = '面试官' 
+}) => {
   const [inputValue, setInputValue] = useState('');
-  // 模拟一些聊天消息
-  const [messages] = useState<Message[]>([
-    {
-      id: 1,
-      sender: 'interviewer',
-      content: '你好！欢迎参加今天的面试。请先简单介绍一下自己吧。',
-      timestamp: '10:00'
-    },
-    {
-      id: 2,
-      sender: 'candidate',
-      content: '您好！我是一名前端开发工程师，有5年React开发经验，熟悉TypeScript和现代前端工具链。',
-      timestamp: '10:01'
-    },
-    {
-      id: 3,
-      sender: 'interviewer',
-      content: '很好！你能谈谈你在之前的项目中遇到的一些挑战和解决方案吗？',
-      timestamp: '10:02'
-    },
-    {
-      id: 4,
-      sender: 'candidate',
-      content: '在我之前的项目中，我们面临的最大挑战是大规模应用的状态管理和性能优化问题。我们通过引入Redux和React Query解决了状态管理问题，并通过代码分割和虚拟列表优化了性能。',
-      timestamp: '10:03'
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [connected, setConnected] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageContainerRef = useRef<HTMLDivElement>(null);
 
+  // 初始化聊天和获取历史消息
+  useEffect(() => {
+    let isMounted = true;
+    
+    const setupChat = async () => {
+      try {
+        setLoading(true);
+        
+        // 初始化聊天服务
+        const initResult = await initializeInterviewChat(interviewId);
+        if (!initResult.success) {
+          message.error(`无法初始化聊天: ${initResult.message}`);
+          return;
+        }
+        
+        // 获取历史消息
+        const messagesResult = await getInterviewMessages(interviewId);
+        if (messagesResult.success && isMounted) {
+          setMessages(messagesResult.data.list);
+        }
+        
+        // 订阅新消息
+        await subscribeToInterviewMessages(interviewId, (newMessage) => {
+          if (isMounted) {
+            setMessages(prev => [...prev, newMessage]);
+          }
+        });
+        
+        // 监听连接状态
+        await onChatConnectionChange(interviewId, (status) => {
+          if (isMounted) {
+            setConnected(status);
+            if (status) {
+              message.success('聊天已连接');
+            } else {
+              message.warning('聊天已断开');
+            }
+          }
+        });
+      } catch (error) {
+        if (isMounted) {
+          message.error(`聊天初始化错误: ${error instanceof Error ? error.message : '未知错误'}`);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    setupChat();
+    
+    // 组件卸载时清理资源
+    return () => {
+      isMounted = false;
+      closeInterviewChat(interviewId);
+    };
+  }, [interviewId]);
+  
+  // 自动滚动到最新消息
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+  
+  // 处理输入变化
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
   };
-
-  const handleSend = () => {
+  
+  // 发送消息
+  const handleSend = async () => {
     if (inputValue.trim()) {
-      // 这里只是演示，实际实现时会添加消息到列表
-      console.log('Sending message:', inputValue);
-      setInputValue('');
+      try {
+        const response = await sendInterviewMessage(interviewId, inputValue);
+        if (!response.success) {
+          message.error(`发送消息失败: ${response.message}`);
+        }
+        setInputValue('');
+      } catch (error) {
+        message.error(`发送消息错误: ${error instanceof Error ? error.message : '未知错误'}`);
+      }
     }
   };
-
+  
+  // 键盘快捷键
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
+  
+  // 判断消息发送者类型
+  const getSenderType = (senderId: string): 'interviewer' | 'candidate' => {
+    // 根据实际业务逻辑判断是否为面试官
+    // 这里简单示例：非"1"的ID被视为面试官
+    return senderId !== '1' ? 'interviewer' : 'candidate';
+  };
 
   return (
     <div className={styles.chatContainer}>
       <div className={styles.header}>
         <div className={styles.interviewInfo}>
-          <h3>技术面试聊天</h3>
-          <span className={styles.status}>在线</span>
+          <h3>面试聊天</h3>
+          <span className={`${styles.status} ${connected ? styles.online : styles.offline}`}>
+            {connected ? '在线' : '离线'}
+          </span>
         </div>
       </div>
       
-      <div className={styles.messageContainer}>
-        {messages.map((message) => (
-          <div 
-            key={message.id} 
-            className={`${styles.messageWrapper} ${message.sender === 'candidate' ? styles.outgoing : styles.incoming}`}
-          >
-            <Avatar 
-              className={styles.avatar}
-              style={{ 
-                backgroundColor: message.sender === 'interviewer' ? '#1677ff' : '#52c41a' 
-              }}
-            >
-              {message.sender === 'interviewer' ? 'I' : 'C'}
-            </Avatar>
-            <div className={styles.messageContent}>
-              <div className={styles.message}>{message.content}</div>
-              <div className={styles.messageTime}>{message.timestamp}</div>
-            </div>
+      <div className={styles.messageContainer} ref={messageContainerRef}>
+        {loading ? (
+          <div className={styles.loadingContainer}>
+            <Spin tip="加载消息中..." />
           </div>
-        ))}
+        ) : messages.length === 0 ? (
+          <div className={styles.emptyMessages}>
+            <p>还没有消息，开始聊天吧！</p>
+          </div>
+        ) : (
+          messages.map((msg) => {
+            const senderType = getSenderType(msg.senderId);
+            return (
+              <div 
+                key={msg.id} 
+                className={`${styles.messageWrapper} ${senderType === 'candidate' ? styles.outgoing : styles.incoming}`}
+              >
+                <Avatar 
+                  className={styles.avatar}
+                  style={{ 
+                    backgroundColor: senderType === 'interviewer' ? '#1677ff' : '#52c41a' 
+                  }}
+                  icon={<UserOutlined />}
+                >
+                  {senderType === 'interviewer' ? 'I' : 'C'}
+                </Avatar>
+                <div className={styles.messageContent}>
+                  <div className={styles.senderName}>
+                    {senderType === 'interviewer' ? interviewerName : msg.senderName}
+                  </div>
+                  <div className={styles.message}>{msg.content}</div>
+                  <div className={styles.messageTime}>
+                    {formatTime(msg.createdAt)}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
       </div>
       
       <div className={styles.inputArea}>
@@ -102,12 +189,14 @@ const Chat: React.FC<ChatProps> = () => {
           placeholder="输入消息..."
           autoSize={{ minRows: 1, maxRows: 4 }}
           className={styles.input}
+          disabled={!connected || loading}
         />
         <Button 
           type="primary" 
           icon={<SendOutlined />} 
           onClick={handleSend}
           className={styles.sendButton}
+          disabled={!connected || loading || !inputValue.trim()}
         />
       </div>
     </div>

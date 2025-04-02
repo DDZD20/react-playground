@@ -20,8 +20,7 @@ export const mockUsers: User[] = [
     id: '1',
     username: TEST_USER.username,
     email: TEST_USER.email,
-    avatarUrl: 'https://avatars.githubusercontent.com/u/1',
-    name: '测试用户',
+    avatar: 'https://avatars.githubusercontent.com/u/1',
     role: 'user',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -246,7 +245,7 @@ export const mockSendMessage = (roomId: string, content: string, senderId: strin
   // 查找发送者信息
   const sender = mockUsers.find(u => u.id === senderId);
   if (sender) {
-    newMessage.senderName = sender.name || sender.username;
+    newMessage.senderName = sender.username;
   }
   
   // 添加到消息列表

@@ -22,8 +22,15 @@
 
 .status {
   font-size: 12px;
-  color: #52c41a;
   margin-left: 8px;
+  
+  &.online {
+    color: #52c41a;
+  }
+  
+  &.offline {
+    color: #ff4d4f;
+  }
 }
 
 .messageContainer {
@@ -70,6 +77,12 @@
   margin-left: 8px;
   display: flex;
   flex-direction: column;
+}
+
+.senderName {
+  font-size: 12px;
+  color: rgba(128, 128, 128, 0.8);
+  margin-bottom: 4px;
 }
 
 .message {
@@ -122,4 +135,22 @@
       background-color: #e6f7ff;
     }
   }
+}
+
+.loadingContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.emptyMessages {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: rgba(128, 128, 128, 0.7);
+  font-style: italic;
 } 
