@@ -13,6 +13,10 @@ export { API_ENDPOINTS, WS_EVENTS } from './config';
 import * as userApi from './user';
 export { userApi };
 
+// 导出聊天相关API
+import * as chatApi from './textChat';
+export { chatApi };
+
 // 导出类型定义
 export * from './types';
 
@@ -20,4 +24,5 @@ export * from './types';
 export default {
   apiConfig,
   userApi,
+  chatApi,
 }; 

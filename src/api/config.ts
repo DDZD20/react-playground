@@ -45,6 +45,16 @@ export const API_ENDPOINTS = {
     SESSION_BY_ID: (id: string) => `/collaboration/sessions/${id}`,
     JOIN: (fileId: string) => `/collaboration/files/${fileId}/join`,
   },
+
+  // 聊天相关
+  CHAT: {
+    ROOMS: '/chat/rooms',
+    ROOM_BY_ID: (id: string) => `/chat/rooms/${id}`,
+    MESSAGES: '/chat/messages',
+    ROOM_MESSAGES: (roomId: string) => `/chat/rooms/${roomId}/messages`,
+    JOIN_ROOM: (roomId: string) => `/chat/rooms/${roomId}/join`,
+    LEAVE_ROOM: (roomId: string) => `/chat/rooms/${roomId}/leave`,
+  },
 };
 
 // WebSocket事件类型
@@ -56,6 +66,10 @@ export const WS_EVENTS = {
   LEAVE_ROOM: 'leave_room',
   SYNC_UPDATE: 'sync_update',
   AWARENESS_UPDATE: 'awareness_update',
+  // 聊天相关事件
+  CHAT_MESSAGE: 'chat_message',
+  TYPING: 'typing',
+  READ_RECEIPT: 'read_receipt',
 };
 
 // 导出配置

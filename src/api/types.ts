@@ -126,6 +126,7 @@ export enum WebSocketMessageType {
   UPDATE_AWARENESS = 'UPDATE_AWARENESS',
   SYNC_UPDATE = 'SYNC_UPDATE',
   ERROR = 'ERROR',
+  CHAT_MESSAGE = 'CHAT_MESSAGE',
 }
 
 export interface WebSocketMessage<T = any> {
@@ -134,4 +135,38 @@ export interface WebSocketMessage<T = any> {
   senderId: string;
   data: T;
   timestamp: number;
+}
+
+// 聊天相关接口
+export interface ChatMessage {
+  id: string;
+  roomId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  type: 'text' | 'image' | 'file' | 'system';
+  createdAt: string;
+  attachmentUrl?: string; // 可选的附件URL，用于图片或文件
+}
+
+export interface SendMessageRequest {
+  roomId: string;
+  content: string;
+  type: 'text' | 'image' | 'file';
+  attachmentUrl?: string;
+}
+
+export interface GetMessagesRequest {
+  roomId: string;
+  before?: string; // 分页：获取此消息ID之前的消息
+  limit?: number; // 分页：每页消息数量
+}
+
+export interface ChatRoom {
+  id: string;
+  name: string;
+  participants: string[]; // 参与者ID数组
+  createdAt: string;
+  updatedAt: string;
+  lastMessage?: ChatMessage; // 最后一条消息（可选）
 } 
