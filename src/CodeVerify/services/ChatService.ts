@@ -19,12 +19,12 @@ interface Socket {
 }
 
 // 模拟io函数，实际项目中需要从socket.io-client导入
-const io = (url: string, options?: any): Socket => {
+const io = (_url: string, _options?: any): Socket => {
   console.warn('使用模拟socket.io实现，实际项目中请安装socket.io-client');
   return {
     id: `mock-socket-${Date.now()}`,
     connected: true,
-    on: (event: string, callback: any) => {
+    on: (event: string, _callback: any) => {
       console.log(`[模拟Socket] 监听事件: ${event}`);
     },
     emit: (event: string, ...args: any[]) => {
@@ -57,6 +57,8 @@ export class ChatService {
   private connected: boolean = false;
 //   private reconnectAttempts: number = 0;
   private readonly maxReconnectAttempts: number = 5;
+  private reconnecting: boolean = false;
+  private manualDisconnect: boolean = false;
   
   // 回调函数存储
   private onMessageCallbacks: MessageCallback[] = [];
@@ -265,12 +267,45 @@ export class ChatService {
    */
   public disconnect(): void {
     if (this.socket) {
-      this.leaveCurrentRoom();
+      this.manualDisconnect = true; // 标记为手动断开
+      this.connected = false;
       this.socket.disconnect();
       this.socket = null;
-      this.connected = false;
+      this.roomId = null;
       this.notifyConnectionCallbacks(false);
       console.log('ChatService: WebSocket连接已断开');
+    }
+  }
+  
+  /**
+   * 手动重新连接WebSocket
+   * 当自动重连失败后可以调用此方法
+   */
+  public async reconnect(): Promise<boolean> {
+    if (this.reconnecting) {
+      console.log('ChatService: 已经在尝试重连中');
+      return false;
+    }
+
+    this.reconnecting = true;
+    this.manualDisconnect = false; // 重置手动断开标记
+    
+    try {
+      console.log('ChatService: 尝试手动重新连接');
+      const result = await this.initialize();
+      
+      // 如果重连成功且之前在某个房间，则重新加入
+      if (result && this.roomId) {
+        await this.joinRoom(this.roomId);
+      }
+      
+      this.reconnecting = false;
+      return result;
+    } catch (error) {
+      console.error('ChatService: 手动重连失败', error);
+      this.reconnecting = false;
+      this.notifyErrorCallbacks(error instanceof Error ? error : new Error('手动重连失败'));
+      return false;
     }
   }
   
@@ -290,6 +325,23 @@ export class ChatService {
     this.socket.on('disconnect', (reason: string) => { // 添加类型
       this.connected = false;
       console.log(`ChatService: WebSocket连接断开: ${reason}`);
+      
+      // 根据断开原因确定是否需要手动重连
+      // 'io client disconnect' - 客户端手动断开
+      // 'io server disconnect' - 服务器断开连接，需要手动重连
+      // 'ping timeout' - 心跳超时，可能是网络问题
+      // 'transport close' - 传输层关闭，网络问题
+      if (reason === 'io server disconnect') {
+        // 服务器主动断开，需要手动重连
+        console.log('ChatService: 服务器断开连接，需要手动重连');
+        if (!this.manualDisconnect) {
+          setTimeout(() => this.reconnect(), 1000);
+        }
+      } else if (this.manualDisconnect) {
+        // 用户手动断开，不自动重连
+        console.log('ChatService: 用户手动断开，不自动重连');
+      }
+      
       this.notifyConnectionCallbacks(false);
     });
     
@@ -303,6 +355,17 @@ export class ChatService {
       if (this.roomId) {
         this.joinRoom(this.roomId);
       }
+    });
+    
+    // 重新连接尝试
+    this.socket.on('reconnect_attempt', (attemptNumber: number) => {
+      console.log(`ChatService: 正在尝试重新连接，第${attemptNumber}次尝试`);
+      // 可以向用户显示重连进度
+    });
+    
+    // 重新连接错误
+    this.socket.on('reconnect_error', (error: any) => {
+      console.error(`ChatService: 重新连接发生错误: ${error.message || '未知错误'}`);
     });
     
     // 重新连接失败

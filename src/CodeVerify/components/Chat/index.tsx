@@ -5,118 +5,92 @@ import styles from './styles.module.scss';
 import { ChatService } from '../../services/ChatService';
 import { ChatMessage } from '../../../api/types';
 import { formatTime } from '../../utils';
-import { mockGetChatMessages } from '../../../api/mockData';
-import { getCurrentUser } from '../../../api/user';
+// import { mockGetChatMessages } from '../../../api/mockData';
+// import { getCurrentUser } from '../../../api/user';
+import ConnectionStatus from '../ConnectionStatus';
+import { getInterviewMessages } from '../../../api/textChat';
 
 interface ChatProps {
   interviewId: string;
   interviewerName?: string;
+  userId: string;
+  username: string;
 }
 
 const Chat: React.FC<ChatProps> = ({ 
   interviewId, 
-  interviewerName = '面试官' 
+  interviewerName = '面试官',
+  userId,
+  username
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
-  const [chatService, setChatService] = useState<ChatService | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | undefined>(undefined);
+  const [service, setService] = useState<ChatService | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
 
   // 初始化聊天和获取历史消息
   useEffect(() => {
-    let isMounted = true;
-    
-    const setupChat = async () => {
+    if (!interviewId || !userId || !username) return;
+
+    const initChat = async () => {
       try {
         setLoading(true);
         
-        // 获取当前用户信息
-        const userResponse = await getCurrentUser();
-        if (!userResponse.success || !userResponse.data) {
-          message.error('无法获取当前用户信息，请先登录');
-          return;
-        }
+        // 创建聊天服务实例，传递正确的参数
+        const newService = new ChatService(userId, username);
         
-        const user = userResponse.data;
-        
-        // 创建并初始化ChatService实例
-        const service = new ChatService(user.id, user.username);
-        
-        // 初始化WebSocket连接
-        const initialized = await service.initialize();
-        if (!initialized) {
-          message.error('无法初始化聊天连接');
-          return;
-        }
-        
-        // 加入面试聊天室
-        const joined = await service.joinRoom(interviewId);
-        if (!joined) {
-          message.error('无法加入聊天室');
-          service.disconnect();
-          return;
-        }
-        
-        if (isMounted) {
-          setChatService(service);
-          setConnected(true);
-        }
-        
-        // 获取历史消息（使用模拟数据）
-        const historyResponse = mockGetChatMessages(interviewId);
-        if (historyResponse.success && isMounted) {
-          setMessages(historyResponse.data.list);
-        }
-        
-        // 订阅新消息
-        service.onMessage((newMessage) => {
-          if (isMounted) {
-            setMessages(prev => [...prev, newMessage]);
+        // 添加连接状态回调
+        newService.onConnectionChange((status: boolean) => {
+          setConnected(status);
+          if (status) {
+            setReconnecting(false);
+            setConnectionError(undefined);
           }
         });
         
-        // 监听连接状态
-        service.onConnectionChange((status) => {
-          if (isMounted) {
-            setConnected(status);
-            if (status) {
-              message.success('聊天已连接');
-            } else {
-              message.warning('聊天已断开');
-            }
-          }
+        // 添加错误处理回调
+        newService.onError((error: Error) => {
+          console.error('Chat error:', error);
+          setConnectionError(error.message);
         });
         
-        // 监听错误
-        service.onError((error) => {
-          if (isMounted) {
-            message.error(`聊天错误: ${error.message}`);
-          }
+        await newService.initialize();
+        await newService.joinRoom(interviewId);
+        setService(newService);
+        
+        // 添加消息回调
+        newService.onMessage((message: ChatMessage) => {
+          setMessages(prevMessages => [...prevMessages, message]);
         });
+        
+        // 获取历史消息
+        const response = await getInterviewMessages(interviewId);
+        if (response.success && response.data) {
+          setMessages(response.data.list);
+        }
+        
+        setConnected(true);
+        setLoading(false);
       } catch (error) {
-        if (isMounted) {
-          message.error(`聊天初始化错误: ${error instanceof Error ? error.message : '未知错误'}`);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        console.error('Failed to initialize chat:', error);
+        setConnectionError(error instanceof Error ? error.message : '初始化聊天失败');
+        setLoading(false);
       }
     };
-    
-    setupChat();
-    
-    // 组件卸载时清理资源
+
+    initChat();
+
     return () => {
-      isMounted = false;
-      if (chatService) {
-        chatService.disconnect();
+      if (service) {
+        service.disconnect();
       }
     };
-  }, [interviewId]);
+  }, [interviewId, userId, username]);
   
   // 自动滚动到最新消息
   useEffect(() => {
@@ -130,9 +104,9 @@ const Chat: React.FC<ChatProps> = ({
   
   // 发送消息
   const handleSend = async () => {
-    if (inputValue.trim() && chatService) {
+    if (inputValue.trim() && service) {
       try {
-        const sentMessage = await chatService.sendMessage(inputValue);
+        const sentMessage = await service.sendMessage(inputValue);
         if (!sentMessage) {
           message.error('发送消息失败');
         }
@@ -158,8 +132,33 @@ const Chat: React.FC<ChatProps> = ({
     return senderId !== '1' ? 'interviewer' : 'candidate';
   };
 
+  const handleReconnect = async () => {
+    if (!service) return;
+    
+    setReconnecting(true);
+    try {
+      const success = await service.reconnect();
+      if (!success) {
+        setConnectionError('重连失败，请稍后再试');
+      }
+    } catch (error) {
+      setConnectionError(error instanceof Error ? error.message : '重连失败');
+    } finally {
+      if (!connected) {
+        setReconnecting(false);
+      }
+    }
+  };
+
   return (
     <div className={styles.chatContainer}>
+      <ConnectionStatus 
+        connected={connected} 
+        reconnecting={reconnecting}
+        onReconnect={handleReconnect}
+        connectionError={connectionError}
+      />
+      
       <div className={styles.header}>
         <div className={styles.interviewInfo}>
           <h3>面试聊天</h3>

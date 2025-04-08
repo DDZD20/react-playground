@@ -1,0 +1,77 @@
+.alertContainer {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1050;
+  width: 450px;
+  max-width: 90vw;
+  animation: slideDown 0.3s ease-out;
+}
+
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.disconnectIcon {
+  font-size: 48px;
+  color: #ff4d4f;
+  margin-bottom: 16px;
+}
+
+.modalText {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.reconnectTips {
+  align-self: flex-start;
+  width: 100%;
+  text-align: left;
+  margin-top: 16px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 12px;
+  
+  p {
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  
+  ul {
+    padding-left: 20px;
+    
+    li {
+      margin-bottom: 4px;
+    }
+  }
+}
+
+.reconnectingStatus {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// 适配深色模式
+:global(.dark) {
+  .reconnectTips {
+    background-color: #1f1f1f;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translate(-50%, -20px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+} 

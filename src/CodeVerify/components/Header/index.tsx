@@ -16,7 +16,6 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation(); // 获取当前路径信息
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
   
   // 检查是否在首页
   const isHomePage = location.pathname === '/';
@@ -41,15 +40,12 @@ export default function Header() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        setLoading(true);
         const response = await getCurrentUser();
         if (response.success && response.data) {
           setUser(response.data);
         }
       } catch (error) {
         console.error('获取用户信息失败:', error);
-      } finally {
-        setLoading(false);
       }
     };
 

@@ -51,17 +51,19 @@ export interface PlaygroundContext {
 
 export type Theme = 'light' | 'dark'
 
-export const PlaygroundContext = createContext<PlaygroundContext>({
-  selectedFileName: 'App.tsx',
-  currentModelId: AI_MODELS[0].id,
-  showAISidebar: false,
-  isDiffMode: false,
-  pendingCode: null,
-  consoleLogs: [],
-  autoCompile: false,
-  needsCompile: false,
-  forceCompileCounter: 0,
-} as PlaygroundContext)
+export const PlaygroundContext = createContext<PlaygroundContext>(
+  ({
+    selectedFileName: 'App.tsx',
+    currentModelId: AI_MODELS[0].id,
+    showAISidebar: false,
+    isDiffMode: false,
+    pendingCode: null,
+    consoleLogs: [],
+    autoCompile: false,
+    needsCompile: false,
+    forceCompileCounter: 0,
+  } as unknown) as PlaygroundContext
+);
 
 const getFilesFromUrl = () => {
   let files: Files | undefined

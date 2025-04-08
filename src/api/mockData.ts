@@ -45,7 +45,7 @@ export const mockLogin = (username: string, password: string) => {
 };
 
 // 使用测试账号的注册模拟函数
-export const mockRegister = (username: string, email: string, password: string) => {
+export const mockRegister = (username: string, email: string /* password: string */) => {
   // 检查是否已存在同名用户
   if (username === TEST_USER.username) {
     return {

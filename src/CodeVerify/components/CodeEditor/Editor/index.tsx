@@ -64,8 +64,9 @@ export default function Editor(props: Props) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof monaco | null>(null);
   const [diffBlocks, setDiffBlocks] = useState<DiffBlock[]>([]);
-  const [diffWidgets, setDiffWidgets] = useState<HTMLDivElement[]>([]);
   const cleanupRef = useRef<() => void>(() => {});
+  // const [isProcessing, setIsProcessing] = useState(false);
+  // const [showModelSelector, setShowModelSelector] = useState(false);
 
   // 初始化差异编辑模式
   const initializeDiffMode = () => {
@@ -86,8 +87,8 @@ export default function Editor(props: Props) {
         onDiffBlocksChanged: (blocks) => {
           setDiffBlocks(blocks);
         },
-        onWidgetsUpdated: (widgets) => {
-          setDiffWidgets(widgets);
+        onWidgetsUpdated: () => {
+          // 不再保存widget，但接口需要这个回调
         },
       }
     );

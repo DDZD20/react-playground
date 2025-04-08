@@ -134,7 +134,7 @@ export const register = async (data: RegisterRequest): Promise<ApiResponse<User>
   // 使用测试账号注册（开发模式）
   if (USE_MOCK_DATA) {
     console.log('使用测试账号注册模式', data);
-    const mockResponse = mockRegister(data.username, data.email, data.password);
+    const mockResponse = mockRegister(data.username, data.email);
     
     if (!mockResponse.success) {
       return {
@@ -277,7 +277,7 @@ export const updateUserProfile = async (data: Partial<User>): Promise<ApiRespons
  */
 export const uploadAvatar = async (
   file: File, 
-  onProgress?: (percentage: number) => void
+  // onProgress?: (percentage: number) => void
 ): Promise<ApiResponse<{avatarUrl: string}>> => {
   // 创建FormData对象
   const formData = new FormData();

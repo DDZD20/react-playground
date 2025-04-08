@@ -14,6 +14,11 @@ interface RightPanelProps {
 const RightPanel: React.FC<RightPanelProps> = () => {
   const [activeTab, setActiveTab] = useState('preview');
 
+  // 模拟数据 - 实际应该从props或全局状态获取
+  const mockInterviewId = "interview-123";
+  const mockUserId = "user-456";
+  const mockUsername = "测试用户";
+
   const items: TabsProps['items'] = [
     {
       key: 'preview',
@@ -43,7 +48,11 @@ const RightPanel: React.FC<RightPanelProps> = () => {
           聊天
         </span>
       ),
-      children: <Chat />,
+      children: <Chat 
+        interviewId={mockInterviewId} 
+        userId={mockUserId} 
+        username={mockUsername} 
+      />,
     },
   ];
 
