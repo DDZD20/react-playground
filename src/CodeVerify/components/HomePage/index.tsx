@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCodeBackground } from './useCodeBackground';
 import { AuthContainer } from '../Auth';
-import MeetingModal from '../MeetingModal';
+import MeetingModal from './MeetingModal';
 import './styles.css';
 
 // 导入图标

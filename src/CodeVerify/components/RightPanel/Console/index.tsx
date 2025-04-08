@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Empty } from 'antd';
 import styles from './styles.module.scss';
-import { PlaygroundContext } from '../../PlaygroundContext';
+import { PlaygroundContext } from '../../../PlaygroundContext';
 
 interface ConsoleProps {
   // 后续可添加实际功能需要的props

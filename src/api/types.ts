@@ -210,4 +210,38 @@ export interface DestroyRoomRequest {
 export interface DestroyRoomResponse {
   success: boolean;
   message?: string;
+}
+
+// WebRTC相关接口
+export interface RTCConfig {
+  iceServers: RTCIceServer[];
+}
+
+export interface RTCIceServer {
+  urls: string | string[];
+  username?: string;
+  credential?: string;
+}
+
+export interface RTCSignalMessage {
+  type: 'offer' | 'answer' | 'ice-candidate';
+  roomId: string;
+  senderId: string;
+  receiverId: string;
+  data: any;
+}
+
+export interface RTCConnectionState {
+  roomId: string;
+  userId: string;
+  state: 'new' | 'connecting' | 'connected' | 'disconnected' | 'failed' | 'closed';
+  timestamp: number;
+}
+
+export interface RTCMediaStream {
+  userId: string;
+  streamId: string;
+  hasAudio: boolean;
+  hasVideo: boolean;
+  timestamp: number;
 } 

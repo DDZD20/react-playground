@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Tabs } from 'antd';
 import type { TabsProps } from 'antd';
-import Preview from '../Preview';
-import Console from '../Console';
-import Chat from '../Chat';
+import Preview from './Preview';
+import Console from './Console';
+import Chat from './Chat';
 import styles from './styles.module.scss';
 import { CodeOutlined, ConsoleSqlOutlined, MessageOutlined } from '@ant-design/icons';
 

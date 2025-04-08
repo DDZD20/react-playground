@@ -2,13 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Input, Button, Avatar, Spin, message } from 'antd';
 import { SendOutlined, UserOutlined } from '@ant-design/icons';
 import styles from './styles.module.scss';
-import { ChatService } from '../../services/ChatService';
-import { ChatMessage } from '../../../api/types';
-import { formatTime } from '../../utils';
-// import { mockGetChatMessages } from '../../../api/mockData';
-// import { getCurrentUser } from '../../../api/user';
+import { ChatService } from '../../../services/ChatService';
+import { ChatMessage } from '../../../../api/types';
+import { formatTime } from '../../../utils';
 import ConnectionStatus from '../ConnectionStatus';
-import { getInterviewMessages } from '../../../api/textChat';
+import { getInterviewMessages } from '../../../../api/textChat';
 
 interface ChatProps {
   interviewId: string;

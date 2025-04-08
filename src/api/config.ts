@@ -55,6 +55,11 @@ export const API_ENDPOINTS = {
     JOIN_ROOM: (roomId: string) => `/chat/rooms/${roomId}/join`,
     LEAVE_ROOM: (roomId: string) => `/chat/rooms/${roomId}/leave`,
   },
+
+  // WebRTC相关
+  WEBRTC: {
+    SIGNAL: '/webrtc/signal',
+  },
 };
 
 // WebSocket事件类型

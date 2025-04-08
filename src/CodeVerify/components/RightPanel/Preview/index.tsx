@@ -1,7 +1,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { PlaygroundContext } from "../../PlaygroundContext";
+import { PlaygroundContext } from "../../../PlaygroundContext";
 import iframeRaw from "./iframe.html?raw";
-import { IMPORT_MAP_FILE_NAME } from "../../files";
+import { IMPORT_MAP_FILE_NAME } from "../../../files";
 import CompilerWorker from "./compiler.worker?worker";
 
 interface MessageData {
