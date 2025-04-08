@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCodeBackground } from './useCodeBackground';
 import { AuthContainer } from '../Auth';
+import MeetingModal from '../MeetingModal';
 import './styles.css';
 
 // 导入图标
@@ -16,7 +17,8 @@ import {
   EyeOutlined,
   BarChartOutlined,
   CodeOutlined,
-  SecurityScanOutlined
+  SecurityScanOutlined,
+  VideoCameraOutlined
 } from '@ant-design/icons';
 
 const HomePage: React.FC = () => {
@@ -32,6 +34,8 @@ const HomePage: React.FC = () => {
   const [showAuth, setShowAuth] = useState(false);
   // 添加箭头显示状态
   const [showArrow, setShowArrow] = useState(true);
+  // 添加会议模态框状态
+  const [showMeetingModal, setShowMeetingModal] = useState(false);
   
   // 检查是否从头像点击过来需要显示登录框
   useEffect(() => {
@@ -92,8 +96,8 @@ const HomePage: React.FC = () => {
     if (!isAuthenticated) {
       setShowAuth(true);
     } else {
-      // 已登录，直接进入应用
-      navigate('/playground');
+      // 已登录，显示会议模态框
+      setShowMeetingModal(true);
     }
   };
   
@@ -105,10 +109,8 @@ const HomePage: React.FC = () => {
     // 可以根据是登录还是注册进行不同的处理
     console.log(isLogin ? '用户已登录' : '用户已注册并登录');
     
-    // 延迟跳转到应用页面，给用户一些视觉反馈时间
-    setTimeout(() => {
-      navigate('/playground');
-    }, 500);
+    // 认证成功后显示会议模态框
+    setShowMeetingModal(true);
   };
   
   // 关闭认证页面
@@ -135,6 +137,22 @@ const HomePage: React.FC = () => {
     }
   };
 
+  // 处理创建会议
+  const handleCreateMeeting = (name: string, password?: string) => {
+    console.log('创建会议:', name, password);
+    setShowMeetingModal(false);
+    // 导航到工作区页面，并传递会议信息
+    navigate('/playground', { state: { meetingName: name, meetingPassword: password } });
+  };
+
+  // 处理加入会议
+  const handleJoinMeeting = (roomId: string, password?: string) => {
+    console.log('加入会议:', roomId, password);
+    setShowMeetingModal(false);
+    // 导航到工作区页面，并传递会议信息
+    navigate('/playground', { state: { roomId, meetingPassword: password } });
+  };
+
   return (
     <div className="home-container">
       <canvas ref={canvasRef} className="code-background"></canvas>
@@ -152,6 +170,14 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       )}
+      
+      {/* 会议模态框 */}
+      <MeetingModal
+        visible={showMeetingModal}
+        onClose={() => setShowMeetingModal(false)}
+        onCreateMeeting={handleCreateMeeting}
+        onJoinMeeting={handleJoinMeeting}
+      />
       
       {/* 首页内容 */}
       <div ref={parallaxRef} className="scrollable-content">
@@ -342,14 +368,16 @@ const HomePage: React.FC = () => {
           <div className="cta-content glassmorphism">
             <h2>准备好开始编程之旅了吗？</h2>
             <p>CodeVerify为您提供最先进的编程面试平台，无论您是面试官还是求职者，都能获得公平、高效的面试体验。</p>
-            <button className="start-button" onClick={handleStart}>
-              <span className="start-text">{isAuthenticated ? '进入工作区' : '开始体验'}</span>
-              <span className="start-icon">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z" fill="currentColor" />
-                </svg>
-              </span>
-            </button>
+            <div className="cta-buttons">
+              <button className="start-button" onClick={handleStart}>
+                <span className="start-text">{isAuthenticated ? '进入工作区' : '开始体验'}</span>
+                <span className="start-icon">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 4L10.59 5.41L16.17 11H4V13H16.17L10.59 18.59L12 20L20 12L12 4Z" fill="currentColor" />
+                  </svg>
+                </span>
+              </button>
+            </div>
           </div>
         </section>
       </div>

@@ -1,0 +1,191 @@
+.meetingModal {
+  :global {
+    .ant-modal-content {
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      color: #ffffff;
+    }
+
+    .ant-modal-header {
+      background: transparent;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px 24px;
+    }
+
+    .ant-modal-title {
+      color: #fff;
+      font-size: 20px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .ant-modal-body {
+      padding: 24px;
+    }
+
+    .ant-modal-footer {
+      border-top: none;
+      padding: 0 24px 24px;
+    }
+
+    .ant-radio-group {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .ant-form-item {
+      margin-bottom: 20px;
+    }
+
+    .ant-form-item-label > label {
+      color: #e2e8f0;
+    }
+
+    .ant-input,
+    .ant-input-password {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #fff;
+      padding: 10px 12px;
+      transition: all 0.3s;
+
+      &:hover,
+      &:focus {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+      }
+
+      &::placeholder {
+        color: rgba(255, 255, 255, 0.5);
+      }
+    }
+
+    .ant-btn {
+      border-radius: 8px;
+      padding: 8px 16px;
+      height: auto;
+      font-weight: 500;
+      transition: all 0.3s;
+
+      &:not(.ant-btn-primary) {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.2);
+          border-color: rgba(255, 255, 255, 0.3);
+        }
+      }
+
+      &.ant-btn-primary {
+        background: linear-gradient(135deg, #60a5fa, #a78bfa);
+        border: none;
+        box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+
+        &:hover {
+          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+          transform: translateY(-1px);
+          box-shadow: 0 6px 16px rgba(96, 165, 250, 0.4);
+        }
+      }
+    }
+  }
+}
+
+.modeSelection {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.modeGroup {
+  :global {
+    .ant-radio-button-wrapper {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 12px 24px;
+      height: auto;
+      line-height: 1.5;
+      transition: all 0.3s;
+
+      &:first-child {
+        border-radius: 8px 0 0 8px;
+      }
+
+      &:last-child {
+        border-radius: 0 8px 8px 0;
+      }
+
+      &:hover {
+        color: #60a5fa;
+      }
+
+      &.ant-radio-button-wrapper-checked {
+        background: linear-gradient(135deg, #60a5fa, #a78bfa);
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
+      }
+    }
+  }
+}
+
+.modeIcon {
+  margin-right: 8px;
+  font-size: 16px;
+}
+
+.meetingForm {
+  :global {
+    .ant-form-item {
+      margin-bottom: 20px;
+    }
+  }
+}
+
+.formActions {
+  margin-top: 32px;
+  text-align: right;
+}
+
+:global(.dark) {
+  .meetingModal {
+    :global {
+      .ant-modal-content {
+        background: rgba(0, 0, 0, 0.8);
+      }
+
+      .ant-modal-title {
+        color: #fff;
+      }
+
+      .ant-input {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+        color: #fff;
+
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.5);
+        }
+      }
+
+      .ant-btn {
+        border-color: rgba(255, 255, 255, 0.2);
+        color: #fff;
+
+        &:hover {
+          border-color: #40a9ff;
+          color: #40a9ff;
+        }
+      }
+    }
+  }
+} 

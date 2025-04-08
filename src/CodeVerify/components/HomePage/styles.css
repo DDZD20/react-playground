@@ -400,6 +400,14 @@
   margin-bottom: 2rem;
 }
 
+/* CTA按钮容器 */
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
 /* 开始按钮 */
 .start-button {
   padding: 1rem 2rem;
@@ -430,6 +438,37 @@
 
 .start-button:hover .start-icon {
   transform: translateX(5px);
+}
+
+/* 会议按钮 */
+.meeting-button {
+  padding: 1rem 2rem;
+  border: none;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 2rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
+}
+
+.meeting-button:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 30px rgba(255, 107, 107, 0.5);
+}
+
+.meeting-icon {
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.meeting-button:hover .meeting-icon {
+  transform: scale(1.1);
 }
 
 /* 认证模态框样式 */
