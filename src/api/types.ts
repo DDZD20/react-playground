@@ -169,4 +169,45 @@ export interface ChatRoom {
   createdAt: string;
   updatedAt: string;
   lastMessage?: ChatMessage; // 最后一条消息（可选）
+}
+
+// 用户角色类型
+export type UserRole = 'host' | 'interviewer';
+
+// 创建房间请求参数
+export interface CreateRoomRequest {
+  userId: string;
+}
+
+// 创建房间响应
+export interface CreateRoomResponse {
+  success: boolean;
+  roomId: string;
+  message?: string;
+}
+
+// 加入房间请求参数
+export interface JoinRoomRequest {
+  roomId: string;
+  userId: string;
+  role: UserRole;
+}
+
+// 加入房间响应
+export interface JoinRoomResponse {
+  success: boolean;
+  message?: string;
+}
+
+// 销毁房间请求参数
+export interface DestroyRoomRequest {
+  roomId: string;
+  userId: string;
+  role: UserRole;
+}
+
+// 销毁房间响应
+export interface DestroyRoomResponse {
+  success: boolean;
+  message?: string;
 } 
