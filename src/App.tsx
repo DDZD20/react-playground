@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation }
 import HomePage from './CodeVerify/components/HomePage';
 import UserPage from './CodeVerify/components/User';
 import Header from './CodeVerify/components/Header';
+import MeetingPrepare from './CodeVerify/components/MeetingPrepare';
 
 import './App.scss';
 import { PlaygroundProvider } from './CodeVerify/PlaygroundContext';
@@ -33,6 +34,7 @@ function App() {
             {/* 嵌套路由 */}
             <Route index element={<HomePage />} />
             <Route path="user" element={<UserPage />} />
+            <Route path="meeting/prepare" element={<MeetingPrepare />} />
           </Route>
           {/* 使用自己布局的路由 */}
           <Route path="/playground" element={<ReactPlayground />} />

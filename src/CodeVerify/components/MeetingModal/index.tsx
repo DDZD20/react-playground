@@ -7,7 +7,7 @@ import styles from './index.module.scss';
 interface MeetingModalProps {
   visible: boolean;
   onClose: () => void;
-  onCreateMeeting: (roomId: string, password?: string) => void;
+  onCreateMeeting: (name: string, password?: string) => void;
   onJoinMeeting: (roomId: string, password?: string) => void;
 }
 
@@ -44,6 +44,7 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
         onJoinMeeting(values.roomId, values.password);
       }
       form.resetFields();
+      onClose();
     } catch (error) {
       console.error('Form validation failed:', error);
     }

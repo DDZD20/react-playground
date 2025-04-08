@@ -17,8 +17,7 @@ import {
   EyeOutlined,
   BarChartOutlined,
   CodeOutlined,
-  SecurityScanOutlined,
-  VideoCameraOutlined
+  SecurityScanOutlined,  
 } from '@ant-design/icons';
 
 const HomePage: React.FC = () => {
@@ -141,16 +140,28 @@ const HomePage: React.FC = () => {
   const handleCreateMeeting = (name: string, password?: string) => {
     console.log('创建会议:', name, password);
     setShowMeetingModal(false);
-    // 导航到工作区页面，并传递会议信息
-    navigate('/playground', { state: { meetingName: name, meetingPassword: password } });
+    // 使用 URL 参数导航到会议准备页面
+    const params = new URLSearchParams();
+    params.set('roomId', name);
+    if (password) {
+      params.set('password', password);
+    }
+    params.set('isHost', 'true');
+    navigate(`/meeting/prepare?${params.toString()}`);
   };
 
   // 处理加入会议
   const handleJoinMeeting = (roomId: string, password?: string) => {
     console.log('加入会议:', roomId, password);
     setShowMeetingModal(false);
-    // 导航到工作区页面，并传递会议信息
-    navigate('/playground', { state: { roomId, meetingPassword: password } });
+    // 使用 URL 参数导航到会议准备页面
+    const params = new URLSearchParams();
+    params.set('roomId', roomId);
+    if (password) {
+      params.set('password', password);
+    }
+    params.set('isHost', 'false');
+    navigate(`/meeting/prepare?${params.toString()}`);
   };
 
   return (
