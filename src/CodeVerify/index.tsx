@@ -6,6 +6,7 @@ import RightPanel from "./components/RightPanel";
 import { useContext } from "react";
 import { PlaygroundContext } from "./PlaygroundContext";
 import AISidebar from "./components/AISidebar";
+import VideoChat from "./components/VideoChat/index";
 
 import "./index.scss";
 
@@ -52,6 +53,7 @@ export default function ReactPlayground() {
 
         {/* 始终渲染 AI 侧栏，通过CSS控制显示隐藏 */}
         <AISidebar />
+        {/* <VideoChat /> */}
       </div>
     </div>
   );

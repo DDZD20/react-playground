@@ -32,8 +32,8 @@ export interface User {
   email: string;
   avatar?: string;
   role: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LoginRequest {
