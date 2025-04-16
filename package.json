@@ -14,6 +14,7 @@
     "@babel/standalone": "^7.24.10",
     "@monaco-editor/react": "^4.6.0",
     "@types/diff": "^7.0.1",
+    "@types/events": "^3.0.3",
     "@typescript/ata": "^0.9.6",
     "allotment": "^1.20.0",
     "antd": "^5.19.3",
@@ -21,6 +22,7 @@
     "classnames": "^2.5.1",
     "copy-to-clipboard": "^3.3.3",
     "diff": "^7.0.0",
+    "events": "^3.3.0",
     "fflate": "^0.8.2",
     "file-saver": "^2.0.5",
     "jszip": "^3.10.1",
@@ -30,7 +32,8 @@
     "react-dom": "^18.2.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.4.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "socket.io-client": "^4.5.4"
   },
   "devDependencies": {
     "@types/babel__standalone": "^7.1.7",
