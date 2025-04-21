@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Modal, Radio, Form, Input, Button } from 'antd';
 import type { RadioChangeEvent } from 'antd';
 import { VideoCameraOutlined, TeamOutlined } from '@ant-design/icons';

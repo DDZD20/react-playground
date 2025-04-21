@@ -126,10 +126,10 @@ const UserProfile: React.FC = () => {
             {user.email}
           </Descriptions.Item>
           <Descriptions.Item label={<><CalendarOutlined /> 注册时间</>}>
-            {formatDate(user.createdAt)}
+            {formatDate(user.createdAt || new Date())}
           </Descriptions.Item>
           <Descriptions.Item label={<><CalendarOutlined /> 最后更新</>}>
-            {formatDate(user.updatedAt)}
+            {formatDate(user.updatedAt || new Date())}
           </Descriptions.Item>
         </Descriptions>
 

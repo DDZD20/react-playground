@@ -132,29 +132,29 @@ export const login = async (data: LoginRequest): Promise<ApiResponse<LoginRespon
  */
 export const register = async (data: RegisterRequest): Promise<ApiResponse<User>> => {
   // 使用测试账号注册（开发模式）
-  if (USE_MOCK_DATA) {
-    console.log('使用测试账号注册模式', data);
-    const mockResponse = mockRegister(data.username, data.email);
+  // if (USE_MOCK_DATA) {
+  //   console.log('使用测试账号注册模式', data);
+  //   const mockResponse = mockRegister(data.username, data.email);
     
-    if (!mockResponse.success) {
-      return {
-        code: 400,
-        success: false,
-        message: mockResponse.message || '注册失败',
-        data: {} as User // 类型断言为空用户对象
-      };
-    }
+  //   if (!mockResponse.success) {
+  //     return {
+  //       code: 400,
+  //       success: false,
+  //       message: mockResponse.message || '注册失败',
+  //       data: {} as User // 类型断言为空用户对象
+  //     };
+  //   }
     
-    // 确保有数据
-    if (mockResponse.data) {
-      return {
-        code: 201,
-        success: true,
-        message: '注册成功（测试模式）',
-        data: mockResponse.data
-      };
-    }
-  }
+  //   // 确保有数据
+  //   if (mockResponse.data) {
+  //     return {
+  //       code: 201,
+  //       success: true,
+  //       message: '注册成功（测试模式）',
+  //       data: mockResponse.data
+  //     };
+  //   }
+  // }
   
   // 使用真实API注册
   return await apiService.post<ApiResponse<User>>(

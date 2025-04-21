@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { RegisterRequest } from '../../../api/types';
 import { register } from '../../../api/user';
 import styles from './index.module.scss';
