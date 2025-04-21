@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Login from './Login';
 import Register from './Register';
-import { getCurrentUser } from '../../../api/user';
+import authService from '../../services/AuthService';
 
 interface AuthContainerProps {
   onAuthSuccess: (isLogin: boolean) => void;
@@ -16,23 +16,16 @@ interface AuthContainerProps {
 const AuthContainer: React.FC<AuthContainerProps> = ({ onAuthSuccess }) => {
   // 是否显示登录（true）或注册（false）界面
   const [isLoginView, setIsLoginView] = useState(true);
+  // 注册成功后的用户名，用于自动填充登录表单
+  const [registeredUsername, setRegisteredUsername] = useState<string>('');
   
   // 检查用户是否已登录
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const response = await getCurrentUser();
-        if (response.success && response.data) {
-          // 用户已登录，调用成功回调
-          onAuthSuccess(true);
-        }
-      } catch (error) {
-        // 忽略错误，继续显示登录界面
-        console.error('检查认证状态错误:', error);
-      }
-    };
-    
-    checkAuth();
+    // 使用AuthService检查是否已认证
+    if (authService.isAuthenticated()) {
+      // 用户已登录，调用成功回调
+      onAuthSuccess(true);
+    }
   }, [onAuthSuccess]);
   
   // 登录成功处理
@@ -41,8 +34,11 @@ const AuthContainer: React.FC<AuthContainerProps> = ({ onAuthSuccess }) => {
   };
   
   // 注册成功处理
-  const handleRegisterSuccess = () => {
-    onAuthSuccess(false);
+  const handleRegisterSuccess = (username: string) => {
+    // 保存注册成功的用户名
+    setRegisteredUsername(username);
+    // 切换到登录视图
+    setIsLoginView(true);
   };
   
   // 切换到登录视图
@@ -61,6 +57,7 @@ const AuthContainer: React.FC<AuthContainerProps> = ({ onAuthSuccess }) => {
         <Login 
           onLoginSuccess={handleLoginSuccess}
           onRegisterClick={switchToRegister}
+          defaultUsername={registeredUsername} // 传递注册成功的用户名
         />
       ) : (
         <Register 

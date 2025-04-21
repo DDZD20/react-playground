@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Avatar, Card, Descriptions, Spin, Button, message, Divider, Typography } from 'antd';
 import { UserOutlined, MailOutlined, CalendarOutlined, EditOutlined, LockOutlined } from '@ant-design/icons';
 import { User } from '../../../api/types';
-import { getCurrentUser } from '../../../api/user';
+import authService from '../../services/AuthService';
 import { formatDate } from '../../utils';
 import styles from './UserProfile.module.scss';
 
@@ -38,12 +38,12 @@ const UserProfile: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUserData = () => {
       try {
         setLoading(true);
-        const response = await getCurrentUser();
-        if (response.success && response.data) {
-          setUser(response.data);
+        const userData = authService.getCurrentUser();
+        if (userData) {
+          setUser(userData);
         } else {
           message.error('获取用户信息失败');
         }

@@ -13,12 +13,6 @@ import {
   RegisterRequest, 
   ApiResponse 
 } from './types';
-import { mockLogin, mockRegister, TEST_USER } from './mockData';
-
-// 是否为开发模式
-const IS_DEV = import.meta.env.DEV;
-// 是否使用模拟数据（仅在开发模式下可用）
-const USE_MOCK_DATA = IS_DEV && true; // 设置为true启用本地测试账号
 
 /**
  * 用户登录
@@ -51,54 +45,41 @@ const USE_MOCK_DATA = IS_DEV && true; // 设置为true启用本地测试账号
  * }
  */
 export const login = async (data: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
-  // 使用测试账号登录（开发模式）
-  if (USE_MOCK_DATA) {
-    console.log('使用测试账号登录模式', data);
-    const mockResponse = mockLogin(data.username, data.password);
+  // // 使用测试账号登录（开发模式）
+  // if (USE_MOCK_DATA) {
+  //   console.log('使用测试账号登录模式', data);
+  //   const mockResponse = mockLogin(data.username, data.password);
     
-    if (mockResponse.success && mockResponse.data) {
-      // 保存mock token
-      apiService.setAuthToken(mockResponse.token as string);
-      localStorage.setItem('refreshToken', mockResponse.token as string);
-      
-      // 构造登录响应格式
-      return {
-        code: 200,
-        success: true,
-        message: '登录成功（测试模式）',
-        data: {
-          token: mockResponse.token as string,
-          user: mockResponse.data
-        }
-      };
-    }
+  //   if (mockResponse.success && mockResponse.data) {
+  //     // 构造登录响应格式
+  //     return {
+  //       code: 200,
+  //       success: true,
+  //       message: '登录成功（测试模式）',
+  //       data: {
+  //         token: mockResponse.token as string,
+  //         user: mockResponse.data
+  //       }
+  //     };
+  //   }
     
-    // 错误响应需要提供空的LoginResponse对象
-    return {
-      code: 401,
-      success: false,
-      message: mockResponse.message || '用户名或密码错误',
-      data: {
-        token: '',
-        user: {} as User // 类型断言为空用户对象
-      }
-    };
-  }
+  //   // 错误响应需要提供空的LoginResponse对象
+  //   return {
+  //     code: 401,
+  //     success: false,
+  //     message: mockResponse.message || '用户名或密码错误',
+  //     data: {
+  //       token: '',
+  //       user: {} as User // 类型断言为空用户对象
+  //     }
+  //   };
+  // }
   
   // 使用真实API登录
-  const response = await apiService.post<ApiResponse<LoginResponse>>(
+  return await apiService.post<ApiResponse<LoginResponse>>(
     API_ENDPOINTS.AUTH.LOGIN, 
     data
   );
-  
-  // 如果登录成功，保存token
-  if (response.success && response.data) {
-    apiService.setAuthToken(response.data.token);
-    // 可以在这里存储refreshToken如果后端返回的话
-    localStorage.setItem('refreshToken', response.data.token);
-  }
-  
-  return response;
 };
 
 /**
@@ -131,89 +112,11 @@ export const login = async (data: LoginRequest): Promise<ApiResponse<LoginRespon
  * }
  */
 export const register = async (data: RegisterRequest): Promise<ApiResponse<User>> => {
-  // 使用测试账号注册（开发模式）
-  // if (USE_MOCK_DATA) {
-  //   console.log('使用测试账号注册模式', data);
-  //   const mockResponse = mockRegister(data.username, data.email);
-    
-  //   if (!mockResponse.success) {
-  //     return {
-  //       code: 400,
-  //       success: false,
-  //       message: mockResponse.message || '注册失败',
-  //       data: {} as User // 类型断言为空用户对象
-  //     };
-  //   }
-    
-  //   // 确保有数据
-  //   if (mockResponse.data) {
-  //     return {
-  //       code: 201,
-  //       success: true,
-  //       message: '注册成功（测试模式）',
-  //       data: mockResponse.data
-  //     };
-  //   }
-  // }
-  
   // 使用真实API注册
   return await apiService.post<ApiResponse<User>>(
     API_ENDPOINTS.AUTH.REGISTER, 
     data
   );
-};
-
-/**
- * 获取当前登录用户的个人信息
- * 
- * @returns {Promise<ApiResponse<User>>} - 返回包含用户信息的响应
- * 
- * @example
- * // 获取个人信息请求示例
- * getCurrentUser()
- * 
- * // 期望的成功响应
- * {
- *   code: 200,
- *   success: true,
- *   message: '获取用户信息成功',
- *   data: {
- *     id: '1234',
- *     username: 'example_user',
- *     email: 'user@example.com',
- *     avatar: 'https://example.com/avatars/user.jpg',
- *     role: 'user',
- *     createdAt: '2023-01-01T00:00:00Z',
- *     updatedAt: '2023-01-01T00:00:00Z'
- *   }
- * }
- */
-export const getCurrentUser = async (): Promise<ApiResponse<User>> => {
-  // 开发模式：检查是否有mock token
-  if (USE_MOCK_DATA) {
-    // 从localStorage获取token
-    const token = localStorage.getItem('refreshToken');
-    if (token === 'mock-jwt-token-for-development') {
-      console.log('返回测试用户信息');
-      return {
-        code: 200,
-        success: true,
-        message: '获取用户信息成功（测试模式）',
-        data: {
-          id: '1',
-          username: TEST_USER.username,
-          email: TEST_USER.email,
-          avatar: 'https://avatars.githubusercontent.com/u/1',
-          role: 'user',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }
-      };
-    }
-  }
-  
-  // 使用真实API获取用户信息
-  return await apiService.get<ApiResponse<User>>(API_ENDPOINTS.AUTH.CURRENT_USER);
 };
 
 /**
@@ -252,8 +155,7 @@ export const updateUserProfile = async (data: Partial<User>): Promise<ApiRespons
 /**
  * 上传用户头像
  * 
- * @param {File} file - 头像图片文件
- * @param {(percentage: number) => void} [onProgress] - 上传进度回调函数
+ * @param {File} file - 要上传的图片文件
  * @returns {Promise<ApiResponse<{avatarUrl: string}>>} - 返回包含头像URL的响应
  * 
  * @example
@@ -276,27 +178,31 @@ export const updateUserProfile = async (data: Partial<User>): Promise<ApiRespons
  * }
  */
 export const uploadAvatar = async (
-  file: File, 
-  // onProgress?: (percentage: number) => void
+  file: File
 ): Promise<ApiResponse<{avatarUrl: string}>> => {
   // 创建FormData对象
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('avatar', file);
   
-  // 直接使用apiService的post方法上传文件
+  // 配置请求头
+  const config = {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  };
+  
   return await apiService.post<ApiResponse<{avatarUrl: string}>>(
     `${API_ENDPOINTS.USERS.PROFILE}/avatar`,
-    formData
+    formData,
+    config
   );
 };
 
 /**
  * 修改密码
  * 
- * @param {Object} data - 修改密码所需数据
- * @param {string} data.oldPassword - 当前密码
- * @param {string} data.newPassword - 新密码
- * @returns {Promise<ApiResponse<{success: boolean}>>} - 返回密码修改结果
+ * @param {Object} data - 包含旧密码和新密码的对象
+ * @returns {Promise<ApiResponse<{success: boolean}>>} - 返回操作结果
  * 
  * @example
  * // 修改密码请求示例
@@ -326,9 +232,9 @@ export const changePassword = async (data: {
 };
 
 /**
- * 退出登录
+ * 用户退出登录
  * 
- * @returns {Promise<ApiResponse<{success: boolean}>>} - 返回登出结果
+ * @returns {Promise<ApiResponse<{success: boolean}>>} - 返回操作结果
  * 
  * @example
  * // 退出登录请求示例
@@ -345,10 +251,19 @@ export const changePassword = async (data: {
  * }
  */
 export const logout = async (): Promise<ApiResponse<{success: boolean}>> => {
-  const response = await apiService.post<ApiResponse<{success: boolean}>>(API_ENDPOINTS.AUTH.LOGOUT);
+  // 在这里，我们只需要清除本地存储的token，不需要向服务器发送请求
+  // 因为服务器端不保存登录状态
   
-  // 无论后端返回什么结果，都清除本地token
+  // 客户端清除认证信息
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('user_info');
+  localStorage.removeItem('token_expiry');
   apiService.clearAuthToken();
   
-  return response;
+  return {
+    code: 200,
+    success: true,
+    message: '退出成功',
+    data: { success: true }
+  };
 }; 

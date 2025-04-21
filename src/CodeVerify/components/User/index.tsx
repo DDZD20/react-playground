@@ -5,8 +5,7 @@ import { UserOutlined, SettingOutlined, HistoryOutlined, LogoutOutlined } from '
 import UserProfile from './UserProfile';
 import UserSettings from './UserSettings';
 import { User } from '../../../api/types';
-import { getCurrentUser } from '../../../api/user';
-import apiService from '../../services/ApiService';
+import authService from '../../services/AuthService';
 import styles from './index.module.scss';
 
 const { TabPane } = Tabs;
@@ -18,12 +17,13 @@ const UserPage: React.FC = () => {
   const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    // 使用AuthService获取用户信息
+    const fetchUserData = () => {
       try {
         setLoading(true);
-        const response = await getCurrentUser();
-        if (response.success && response.data) {
-          setUser(response.data);
+        const userData = authService.getCurrentUser();
+        if (userData) {
+          setUser(userData);
         } else {
           message.error('获取用户信息失败');
         }
@@ -44,10 +44,8 @@ const UserPage: React.FC = () => {
   const handleLogout = () => {
     try {
       setLoggingOut(true);
-      // 清除本地存储的token
-      apiService.clearAuthToken();
-      // 清除localStorage中的token
-      localStorage.removeItem('refreshToken');
+      // 使用AuthService退出登录
+      authService.logout();
       // 显示成功消息
       message.success('退出登录成功');
       // 重定向到首页或登录页面

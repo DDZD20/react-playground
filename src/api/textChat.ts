@@ -8,8 +8,8 @@ import { ChatService } from '../CodeVerify/services/ChatService';
 import { ApiResponse, ChatMessage } from './types';
 import { mockGetChatMessages, mockSendMessage } from './mockData';
 
-// 导入getCurrentUser函数
-import { getCurrentUser } from './user';
+// 导入AuthService
+import authService from '../CodeVerify/services/AuthService';
 
 // 确定当前环境
 const IS_DEV = import.meta.env.DEV || import.meta.env.MODE === 'development';
@@ -36,8 +36,8 @@ export const initializeInterviewChat = async (interviewId: string): Promise<ApiR
     }
 
     // 获取当前用户信息
-    const currentUser = await getCurrentUser();
-    if (!currentUser.success || !currentUser.data) {
+    const currentUser = authService.getCurrentUser();
+    if (!currentUser) {
       return {
         code: 401,
         success: false,
@@ -47,7 +47,7 @@ export const initializeInterviewChat = async (interviewId: string): Promise<ApiR
     }
 
     // 创建聊天服务实例
-    const chatService = new ChatService(currentUser.data.id, currentUser.data.username);
+    const chatService = new ChatService(currentUser.id, currentUser.username);
     
     // 初始化WebSocket连接
     const initialized = await chatService.initialize();
@@ -173,8 +173,8 @@ export const sendInterviewMessage = async (
     // 开发环境使用模拟数据
     if (IS_DEV) {
       // 获取当前用户
-      const currentUser = await getCurrentUser();
-      const senderId = currentUser.success && currentUser.data ? currentUser.data.id : '1';  // 默认为测试用户ID
+      const currentUser = authService.getCurrentUser();
+      const senderId = currentUser ? currentUser.id : '1';  // 默认为测试用户ID
       
       // 使用模拟函数发送消息
       const response = mockSendMessage(interviewId, content, senderId, type);

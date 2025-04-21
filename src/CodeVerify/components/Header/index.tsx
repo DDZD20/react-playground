@@ -8,7 +8,7 @@ import { message, Avatar } from 'antd';
 import copy from 'copy-to-clipboard';
 import { downloadFiles } from '../../utils';
 import ModelSelector from './ModelSelector';
-import { getCurrentUser } from '../../../api/user';
+import authService from '../../services/AuthService';
 import { User } from '../../../api/types';
 
 export default function Header() {
@@ -38,18 +38,11 @@ export default function Header() {
 
   // 获取用户信息
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await getCurrentUser();
-        if (response.success && response.data) {
-          setUser(response.data);
-        }
-      } catch (error) {
-        console.error('获取用户信息失败:', error);
-      }
-    };
-
-    fetchUserData();
+    // 使用AuthService获取用户信息
+    const user = authService.getCurrentUser();
+    if (user) {
+      setUser(user);
+    }
   }, []);
 
   // 根据用户名生成随机颜色作为头像背景色

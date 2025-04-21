@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LoginRequest } from '../../../api/types';
 import { login } from '../../../api/user';
 import styles from './index.module.scss';
+import authService from '../../services/AuthService';
 
 interface LoginProps {
   onLoginSuccess: () => void;
   onRegisterClick: () => void; // 切换到注册页面
+  defaultUsername?: string; // 默认用户名，可选
 }
 
 /**
@@ -13,12 +15,19 @@ interface LoginProps {
  * 
  * 提供用户登录表单界面，支持用户名/密码登录以及第三方登录选项
  */
-const Login: React.FC<LoginProps> = ({ onLoginSuccess, onRegisterClick }) => {
+const Login: React.FC<LoginProps> = ({ onLoginSuccess, onRegisterClick, defaultUsername = '' }) => {
   // 表单状态
   const [formData, setFormData] = useState<LoginRequest>({
-    username: '',
+    username: defaultUsername,
     password: ''
   });
+  
+  // 当defaultUsername变化时更新表单
+  useEffect(() => {
+    if (defaultUsername) {
+      setFormData(prev => ({ ...prev, username: defaultUsername }));
+    }
+  }, [defaultUsername]);
   
   // 记住我选项
   const [rememberMe, setRememberMe] = useState(false);
@@ -50,7 +59,13 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onRegisterClick }) => {
       
       const response = await login(formData);
       
-      if (response.success) {
+      if (response.success && response.data) {
+        // 使用AuthService保存认证信息
+        const { token, user } = response.data;
+        // 从token中解析过期时间
+        const expiryInSeconds = authService.getTokenExpiryFromJWT(token);
+        authService.saveAuthInfo(token, user, expiryInSeconds);
+        
         // 记住我选项处理
         if (rememberMe) {
           localStorage.setItem('remember_username', formData.username);

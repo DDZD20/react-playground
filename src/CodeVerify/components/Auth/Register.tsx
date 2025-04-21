@@ -4,7 +4,7 @@ import { register } from '../../../api/user';
 import styles from './index.module.scss';
 
 interface RegisterProps {
-  onRegisterSuccess: () => void;
+  onRegisterSuccess: (username: string) => void;
   onLoginClick: () => void; // 切换到登录页面
 }
 
@@ -110,7 +110,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onLoginClick }) 
       const response = await register(registerData);
       
       if (response.success) {
-        onRegisterSuccess(); // 注册成功回调
+        onRegisterSuccess(formData.username);
       } else {
         setError(response.message || '注册失败，请稍后再试');
       }
