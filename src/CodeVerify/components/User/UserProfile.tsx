@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Avatar, Card, Descriptions, Spin, Button, message, Divider, Typography } from 'antd';
 import { UserOutlined, MailOutlined, CalendarOutlined, EditOutlined, LockOutlined } from '@ant-design/icons';
 import { User } from '../../../api/types';

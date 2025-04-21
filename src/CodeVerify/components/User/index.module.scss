@@ -4,6 +4,21 @@
   margin: 0 auto;
 }
 
+.userHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+  
+  h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+  }
+}
+
 .loadingContainer, 
 .errorContainer {
   display: flex;
@@ -38,5 +53,13 @@
 :global(.dark) {
   .comingSoon {
     color: rgba(255, 255, 255, 0.45);
+  }
+  
+  .userHeader {
+    border-bottom-color: #303030;
+    
+    h2 {
+      color: #f0f0f0;
+    }
   }
 } 

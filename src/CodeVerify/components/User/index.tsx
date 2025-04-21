@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Tabs, Spin, message } from 'antd';
-import { UserOutlined, SettingOutlined, HistoryOutlined } from '@ant-design/icons';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
+import { Tabs, Spin, message, Button } from 'antd';
+import { UserOutlined, SettingOutlined, HistoryOutlined, LogoutOutlined } from '@ant-design/icons';
 import UserProfile from './UserProfile';
 import UserSettings from './UserSettings';
 import { User } from '../../../api/types';
 import { getCurrentUser } from '../../../api/user';
+import apiService from '../../services/ApiService';
 import styles from './index.module.scss';
 
 const { TabPane } = Tabs;
@@ -13,6 +15,7 @@ const UserPage: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -38,6 +41,25 @@ const UserPage: React.FC = () => {
     setActiveTab(key);
   };
 
+  const handleLogout = () => {
+    try {
+      setLoggingOut(true);
+      // 清除本地存储的token
+      apiService.clearAuthToken();
+      // 清除localStorage中的token
+      localStorage.removeItem('refreshToken');
+      // 显示成功消息
+      message.success('退出登录成功');
+      // 重定向到首页或登录页面
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+    } catch (error) {
+      message.error(`退出登录出错: ${error instanceof Error ? error.message : '未知错误'}`);
+      setLoggingOut(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
@@ -57,6 +79,18 @@ const UserPage: React.FC = () => {
 
   return (
     <div className={styles.userPageContainer}>
+      <div className={styles.userHeader}>
+        <h2>欢迎，{user.username}</h2>
+        <Button 
+          type="primary" 
+          danger 
+          icon={<LogoutOutlined />} 
+          onClick={handleLogout}
+          loading={loggingOut}
+        >
+          退出登录
+        </Button>
+      </div>
       <Tabs activeKey={activeTab} onChange={handleTabChange} className={styles.tabs}>
         <TabPane 
           tab={<span><UserOutlined /> 个人资料</span>} 
