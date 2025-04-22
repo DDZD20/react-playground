@@ -5,104 +5,13 @@ import {
   WebSocketMessage,
   ChatMessage,
   JoinRoomRequest,
-  JoinRoomResponse
 } from '../../api/types';
-
-// =====================
-// 类型定义
-// =====================
-
-export interface User {
-  userId: string;
-  userName: string;
-  role?: UserRole;
-}
-
-export interface Message {
-  id: string;
-  senderId: string;
-  senderName: string;
-  content: string;
-  timestamp: number;
-}
-
-export interface RoomStatus {
-  roomId: string;
-  participants: Array<{
-    userId: string;
-    userName: string;
-    role: UserRole;
-    ready: boolean;
-  }>;
-  hostReady: boolean;
-  candidateReady: boolean;
-  allReady: boolean;
-}
-
-export interface UserJoinedEvent {
-  userId: string;
-  userName: string;
-  role?: UserRole;
-  timestamp?: number;
-}
-
-export interface UserLeftEvent {
-  userId: string;
-  userName: string;
-  role?: UserRole;
-  timestamp?: number;
-}
-
-// SocketService各命名空间
-export enum SocketNamespace {
-  MAIN = '/',            // 主命名空间
-  INTERVIEW = '/interview', // 面试相关
-  CHAT = '/chat',         // 聊天相关
-  NOTIFICATION = '/notification' // 通知相关
-}
-
-// 事件类型定义
-export enum SocketEvent {
-  // 通用事件
-  CONNECT = 'connect',
-  DISCONNECT = 'disconnect',
-  CONNECT_ERROR = 'connect_error',
-  
-  // 认证事件
-  AUTHENTICATE = 'authenticate',
-  AUTHENTICATED = 'authenticated',
-  
-  // 房间事件
-  JOIN_ROOM = 'joinRoom',
-  LEAVE_ROOM = 'leaveRoom',
-  USER_JOINED = 'userJoined',
-  USER_LEFT = 'userLeft',
-  MARK_READY = 'markReady',
-  ROOM_STATUS = 'roomStatus',
-  ALL_READY = 'allReady',
-  
-  // 聊天事件
-  SEND_MESSAGE = 'sendMessage',
-  NEW_MESSAGE = 'newMessage',
-  
-  // 通知事件
-  SUBSCRIBE = 'subscribe',
-  NEW_NOTIFICATION = 'newNotification'
-}
-
-// 事件映射类型
-export interface EventMap {
-  [SocketEvent.CONNECT]: void;
-  [SocketEvent.DISCONNECT]: string;
-  [SocketEvent.CONNECT_ERROR]: Error;
-  [SocketEvent.AUTHENTICATED]: JoinRoomResponse;
-  'userJoined': { userId: string; userName: string; role?: UserRole };
-  'userLeft': { userId: string; userName: string; role?: UserRole };
-  'roomStatus': RoomStatus;
-  'allReady': RoomStatus;
-  'newMessage': ChatMessage;
-  'newNotification': WebSocketMessage;
-}
+import {
+  RoomStatus,
+  SocketNamespace,
+  SocketEvent,
+  EventMap
+} from './type';
 
 /**
  * Socket服务类 - 处理WebSocket通信
@@ -113,78 +22,136 @@ class SocketService {
   private userId: string | null = null;
   private userName: string | null = null;
   private baseUrl = '';
+  private currentRoomId: string | null = null;
+  private currentRole: UserRole | null = null;
+  private reconnectAttempts = 0;
+  private readonly maxReconnectAttempts = 5;
   
   constructor() {
     this.events.setMaxListeners(50);
   }
   
   /**
-   * 连接到WebSocket服务器
+   * 记录 Socket 事件
    */
-  public connect(baseUrl: string, options: { autoConnect?: boolean } = {}): this {
-    this.baseUrl = baseUrl;
-    
-    // 创建主连接
-    const mainSocket = io(baseUrl, {
-      autoConnect: options.autoConnect !== false,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      timeout: 10000
-    });
-    
-    this.sockets.set(SocketNamespace.MAIN, mainSocket);
-    
-    // 设置事件监听器
-    mainSocket.on(SocketEvent.CONNECT, () => {
-      console.log('Socket连接成功');
-      this.events.emit(SocketEvent.CONNECT);
-      
-      // 自动重新认证
-      if (this.userId && this.userName) {
-        this.authenticate(this.userId, this.userName)
-          .catch(err => console.error('自动重新认证失败:', err));
-      }
-    });
-    
-    mainSocket.on(SocketEvent.DISCONNECT, (reason: string) => {
-      console.log(`Socket断开连接: ${reason}`);
-      this.events.emit(SocketEvent.DISCONNECT, reason);
-    });
-    
-    mainSocket.on(SocketEvent.CONNECT_ERROR, (error: Error) => {
-      console.error('Socket连接错误:', error.message);
-      this.events.emit(SocketEvent.CONNECT_ERROR, error);
-    });
-    
-    mainSocket.on(SocketEvent.AUTHENTICATED, (response: JoinRoomResponse) => {
-      console.log('认证结果:', response.success);
-      this.events.emit(SocketEvent.AUTHENTICATED, response);
-      
-      if (response.success) {
-        this.connectNamespaces();
-      }
-    });
-    
-    return this;
+  private logSocketEvent(type: 'SEND' | 'RECEIVE', namespace: string, event: string, data?: any): void {
+    const timestamp = new Date().toISOString();
+    const direction = type === 'SEND' ? '发送 ➡️' : '接收 ⬅️';
+    console.log(`[${timestamp}] ${direction} [${namespace}] ${event}`, data || '');
   }
   
   /**
-   * 连接到其他命名空间
+   * 连接到WebSocket服务器
    */
-  private connectNamespaces(): void {
-    const authData = { userId: this.userId, userName: this.userName };
+  public async connect(baseUrl: string, userId: string, userName: string): Promise<boolean> {
+    this.baseUrl = baseUrl;
+    this.userId = userId;
+    this.userName = userName;
     
-    // 连接其他命名空间并设置监听器
+    try {
+      await this.connectMainNamespace();
+      this.connectOtherNamespaces();
+      return true;
+    } catch (error) {
+      console.error('Socket连接失败:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * 连接主命名空间
+   */
+  private connectMainNamespace(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const mainSocket = io(this.baseUrl, {
+        autoConnect: true,
+        reconnection: true,
+        reconnectionAttempts: this.maxReconnectAttempts,
+        reconnectionDelay: 1000,
+        timeout: 10000,
+        query: {
+          userId: this.userId,
+          userName: this.userName
+        }
+      });
+      
+      this.sockets.set(SocketNamespace.MAIN, mainSocket);
+      
+      mainSocket.on(SocketEvent.CONNECT, () => {
+        this.logSocketEvent('RECEIVE', 'MAIN', SocketEvent.CONNECT);
+        this.events.emit(SocketEvent.CONNECT);
+        resolve();
+      });
+      
+      mainSocket.on(SocketEvent.DISCONNECT, (reason: string) => {
+        this.logSocketEvent('RECEIVE', 'MAIN', SocketEvent.DISCONNECT, { reason });
+        this.events.emit(SocketEvent.DISCONNECT, reason);
+        this.handleDisconnect(reason);
+      });
+      
+      mainSocket.on(SocketEvent.CONNECT_ERROR, (error: Error) => {
+        this.logSocketEvent('RECEIVE', 'MAIN', SocketEvent.CONNECT_ERROR, { error: error.message });
+        this.events.emit(SocketEvent.CONNECT_ERROR, error);
+        reject(error);
+      });
+      
+      // 设置超时
+      setTimeout(() => {
+        if (!mainSocket.connected) {
+          reject(new Error('连接超时'));
+        }
+      }, 10000);
+    });
+  }
+  
+  /**
+   * 连接其他命名空间
+   */
+  private connectOtherNamespaces(): void {
+    const query = { userId: this.userId, userName: this.userName };
+    
     [
       { ns: SocketNamespace.INTERVIEW, name: 'interview' },
       { ns: SocketNamespace.CHAT, name: 'chat' },
       { ns: SocketNamespace.NOTIFICATION, name: 'notification' }
     ].forEach(({ ns, name }) => {
-      const socket = io(`${this.baseUrl}${ns}`, { auth: authData });
+      const socket = io(`${this.baseUrl}${ns}`, { query });
       this.sockets.set(ns, socket);
       this.setupSocketListeners(socket, name);
+      this.logSocketEvent('SEND', name, 'connect', query);
     });
+  }
+  
+  /**
+   * 处理断开连接
+   */
+  private handleDisconnect(reason: string): void {
+    // 如果是服务器主动断开或网络问题，尝试重连
+    if (reason === 'io server disconnect' || reason === 'transport close') {
+      this.reconnectAttempts++;
+      if (this.reconnectAttempts <= this.maxReconnectAttempts) {
+        console.log(`尝试重新连接 (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        setTimeout(() => this.reconnect(), 1000);
+      } else {
+        console.error('达到最大重连次数');
+        this.events.emit('maxReconnectAttemptsReached');
+      }
+    }
+  }
+  
+  /**
+   * 重新连接
+   */
+  private async reconnect(): Promise<void> {
+    try {
+      await this.connect(this.baseUrl, this.userId!, this.userName!);
+      // 如果之前在房间中，重新加入
+      if (this.currentRoomId && this.currentRole) {
+        this.joinRoom(this.currentRoomId, this.currentRole);
+      }
+    } catch (error) {
+      console.error('重连失败:', error);
+    }
   }
   
   /**
@@ -193,20 +160,24 @@ class SocketService {
   private setupSocketListeners(socket: any, namespace: string): void {
     // 用户加入/离开事件
     socket.on(SocketEvent.USER_JOINED, (data: any) => {
+      this.logSocketEvent('RECEIVE', namespace, SocketEvent.USER_JOINED, data);
       this.events.emit('userJoined', data);
     });
     
     socket.on(SocketEvent.USER_LEFT, (data: any) => {
+      this.logSocketEvent('RECEIVE', namespace, SocketEvent.USER_LEFT, data);
       this.events.emit('userLeft', data);
     });
     
     // 面试特有事件
     if (namespace === 'interview') {
       socket.on(SocketEvent.ROOM_STATUS, (data: RoomStatus) => {
+        this.logSocketEvent('RECEIVE', namespace, SocketEvent.ROOM_STATUS, data);
         this.events.emit('roomStatus', data);
       });
       
       socket.on(SocketEvent.ALL_READY, (data: RoomStatus) => {
+        this.logSocketEvent('RECEIVE', namespace, SocketEvent.ALL_READY, data);
         this.events.emit('allReady', data);
       });
     }
@@ -214,6 +185,7 @@ class SocketService {
     // 聊天特有事件
     if (namespace === 'chat') {
       socket.on(SocketEvent.NEW_MESSAGE, (data: ChatMessage) => {
+        this.logSocketEvent('RECEIVE', namespace, SocketEvent.NEW_MESSAGE, data);
         this.events.emit('newMessage', data);
       });
     }
@@ -221,30 +193,10 @@ class SocketService {
     // 通知特有事件
     if (namespace === 'notification') {
       socket.on(SocketEvent.NEW_NOTIFICATION, (data: WebSocketMessage) => {
+        this.logSocketEvent('RECEIVE', namespace, SocketEvent.NEW_NOTIFICATION, data);
         this.events.emit('newNotification', data);
       });
     }
-  }
-  
-  /**
-   * 用户认证
-   */
-  public authenticate(userId: string, userName: string): Promise<boolean> {
-    if (!this.isConnected()) {
-      return Promise.reject(new Error('Socket未连接'));
-    }
-    
-    this.userId = userId;
-    this.userName = userName;
-    
-    const socket = this.getSocket(SocketNamespace.MAIN);
-    socket.emit(SocketEvent.AUTHENTICATE, { userId, userName });
-    
-    return new Promise<boolean>((resolve) => {
-      this.once(SocketEvent.AUTHENTICATED, (response: JoinRoomResponse) => {
-        resolve(response.success);
-      });
-    });
   }
   
   /**
@@ -270,75 +222,94 @@ class SocketService {
    * 加入房间
    */
   public joinRoom(roomId: string, role: UserRole): void {
-    if (!this.userId || !this.userName) {
-      throw new Error('用户未认证，无法加入房间');
+    if (!this.isConnected()) {
+      throw new Error('Socket未连接');
     }
+    
+    this.currentRoomId = roomId;
+    this.currentRole = role;
     
     const request: JoinRoomRequest = {
       roomId,
-      userId: this.userId,
+      userId: this.userId!,
       role
     };
     
+    this.logSocketEvent('SEND', 'interview', SocketEvent.JOIN_ROOM, request);
     this.getSocket(SocketNamespace.INTERVIEW).emit(SocketEvent.JOIN_ROOM, request);
   }
   
   /**
    * 离开房间
    */
-  public leaveRoom(roomId: string): void {
-    if (!this.userId) {
-      throw new Error('用户未认证，无法离开房间');
+  public leaveRoom(): void {
+    if (!this.currentRoomId) {
+      return;
     }
     
-    this.getSocket(SocketNamespace.INTERVIEW).emit(SocketEvent.LEAVE_ROOM, {
-      roomId,
+    const request = {
+      roomId: this.currentRoomId,
       userId: this.userId
-    });
+    };
+    
+    this.logSocketEvent('SEND', 'interview', SocketEvent.LEAVE_ROOM, request);
+    this.getSocket(SocketNamespace.INTERVIEW).emit(SocketEvent.LEAVE_ROOM, request);
+    
+    this.currentRoomId = null;
+    this.currentRole = null;
   }
   
   /**
    * 标记准备就绪
    */
-  public markReady(roomId: string): void {
-    if (!this.userId) {
-      throw new Error('用户未认证，无法标记准备就绪');
+  public markReady(): void {
+    if (!this.currentRoomId) {
+      throw new Error('未加入房间');
     }
     
-    this.getSocket(SocketNamespace.INTERVIEW).emit(SocketEvent.MARK_READY, {
-      roomId,
+    const request = {
+      roomId: this.currentRoomId,
       userId: this.userId
-    });
+    };
+    
+    this.logSocketEvent('SEND', 'interview', SocketEvent.MARK_READY, request);
+    this.getSocket(SocketNamespace.INTERVIEW).emit(SocketEvent.MARK_READY, request);
   }
   
   /**
    * 发送聊天消息
    */
-  public sendMessage(roomId: string, content: string): void {
-    if (!this.userId || !this.userName) {
-      throw new Error('用户未认证，无法发送消息');
+  public sendMessage(content: string): void {
+    if (!this.currentRoomId) {
+      throw new Error('未加入房间');
     }
     
-    this.getSocket(SocketNamespace.CHAT).emit(SocketEvent.SEND_MESSAGE, {
-      roomId,
+    const message = {
+      roomId: this.currentRoomId,
       content,
       senderId: this.userId,
       senderName: this.userName,
       type: 'text'
-    });
+    };
+    
+    this.logSocketEvent('SEND', 'chat', SocketEvent.SEND_MESSAGE, message);
+    this.getSocket(SocketNamespace.CHAT).emit(SocketEvent.SEND_MESSAGE, message);
   }
   
   /**
    * 订阅通知
    */
   public subscribeToNotifications(): void {
-    if (!this.userId) {
-      throw new Error('用户未认证，无法订阅通知');
+    if (!this.isConnected()) {
+      throw new Error('Socket未连接');
     }
     
-    this.getSocket(SocketNamespace.NOTIFICATION).emit(SocketEvent.SUBSCRIBE, {
+    const request = {
       userId: this.userId
-    });
+    };
+    
+    this.logSocketEvent('SEND', 'notification', SocketEvent.SUBSCRIBE, request);
+    this.getSocket(SocketNamespace.NOTIFICATION).emit(SocketEvent.SUBSCRIBE, request);
   }
   
   /**
@@ -379,6 +350,9 @@ class SocketService {
     
     this.sockets.clear();
     this.events.removeAllListeners();
+    this.currentRoomId = null;
+    this.currentRole = null;
+    this.reconnectAttempts = 0;
   }
 }
 

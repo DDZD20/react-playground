@@ -286,7 +286,7 @@ const MeetingPrepare: React.FC = () => {
     if (password) params.set('password', password);
     if (isHost) params.set('isHost', 'true');
 
-    navigate(`/meeting?${params.toString()}`);
+    navigate(`/playground?${params.toString()}`);
   };
 
   useEffect(() => {

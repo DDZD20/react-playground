@@ -1,4 +1,5 @@
 import * as monaco from 'monaco-editor';
+import { UserRole, WebSocketMessage, ChatMessage } from '../../api/types';
 
 // AI模型接口
 export interface AIModel {
@@ -32,8 +33,6 @@ export interface CodeCompletionRequest {
     endColumn: number;
   };
 }
-
-
 
 // diff 类型
 // 差异块接口
@@ -81,4 +80,87 @@ export interface DiffActionResult {
 export interface WidgetPosition {
   top: number;
   blockId: string;
+}
+
+// =====================
+// Socket 类型定义
+// =====================
+
+export interface User {
+  userId: string;
+  userName: string;
+  role?: UserRole;
+}
+
+export interface RoomStatus {
+  roomId: string;
+  participants: Array<{
+    userId: string;
+    userName: string;
+    role: UserRole;
+    ready: boolean;
+  }>;
+  hostReady: boolean;
+  candidateReady: boolean;
+  allReady: boolean;
+}
+
+export interface UserJoinedEvent {
+  userId: string;
+  userName: string;
+  role?: UserRole;
+  timestamp?: number;
+}
+
+export interface UserLeftEvent {
+  userId: string;
+  userName: string;
+  role?: UserRole;
+  timestamp?: number;
+}
+
+// Socket命名空间
+export enum SocketNamespace {
+  MAIN = '/',            // 主命名空间
+  INTERVIEW = '/interview', // 面试相关
+  CHAT = '/chat',         // 聊天相关
+  NOTIFICATION = '/notification' // 通知相关
+}
+
+// 事件类型定义
+export enum SocketEvent {
+  // 通用事件
+  CONNECT = 'connect',
+  DISCONNECT = 'disconnect',
+  CONNECT_ERROR = 'connect_error',
+  
+  // 房间事件
+  JOIN_ROOM = 'joinRoom',
+  LEAVE_ROOM = 'leaveRoom',
+  USER_JOINED = 'userJoined',
+  USER_LEFT = 'userLeft',
+  MARK_READY = 'markReady',
+  ROOM_STATUS = 'roomStatus',
+  ALL_READY = 'allReady',
+  
+  // 聊天事件
+  SEND_MESSAGE = 'sendMessage',
+  NEW_MESSAGE = 'newMessage',
+  
+  // 通知事件
+  SUBSCRIBE = 'subscribe',
+  NEW_NOTIFICATION = 'newNotification'
+}
+
+// 事件映射类型
+export interface EventMap {
+  [SocketEvent.CONNECT]: void;
+  [SocketEvent.DISCONNECT]: string;
+  [SocketEvent.CONNECT_ERROR]: Error;
+  'userJoined': { userId: string; userName: string; role?: UserRole };
+  'userLeft': { userId: string; userName: string; role?: UserRole };
+  'roomStatus': RoomStatus;
+  'allReady': RoomStatus;
+  'newMessage': ChatMessage;
+  'newNotification': WebSocketMessage;
 } 
