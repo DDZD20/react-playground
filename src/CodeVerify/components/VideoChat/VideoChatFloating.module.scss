@@ -132,4 +132,193 @@
     --text-secondary: #666666;
     --border-color: #e8e8e8;
   }
+}
+
+/* 视频聊天悬浮窗样式 */
+
+.videoContainerOuter {
+  position: fixed;
+  z-index: 1000000;
+  border-radius: 12px;
+  background-color: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  user-select: none;
+  transform-style: preserve-3d;
+  will-change: transform;
+  pointer-events: auto;
+}
+
+.videoContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.videoElement {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+.placeholderAvatar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a1a;
+  
+  .avatarIcon {
+    font-size: 64px;
+    color: #333;
+    opacity: 0.8;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(
+        circle at center,
+        rgba(51, 51, 51, 0.2) 0%,
+        rgba(26, 26, 26, 0) 70%
+      );
+    }
+  }
+}
+
+.dragHandle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  cursor: move;
+  z-index: 10;
+  background: linear-gradient(to bottom, 
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(0, 0, 0, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.videoControls {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 24px;
+  z-index: 10;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+}
+
+.controlButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  &.active {
+    background: #2196f3;
+    
+    &:hover {
+      background: #1976d2;
+    }
+  }
+  
+  &:focus {
+    outline: none;
+  }
+
+  svg {
+    font-size: 18px;
+  }
+}
+
+.audioMutedIndicator {
+  position: absolute;
+  bottom: 55px;
+  right: 15px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff4d4f;
+}
+
+.edgeIndicator {
+  z-index: 20;
+}
+
+/* 当容器悬挂在边缘时的动画效果 */
+@keyframes pulse {
+  0% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+.videoContainerOuter:hover .dragHandle {
+  opacity: 1;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .videoContainerOuter {
+    border-radius: 8px;
+  }
+  
+  .controlButton {
+    width: 28px;
+    height: 28px;
+    
+    svg {
+      font-size: 16px;
+    }
+  }
+  
+  .placeholderAvatar {
+    .avatarIcon {
+      font-size: 48px;
+    }
+  }
 } 
