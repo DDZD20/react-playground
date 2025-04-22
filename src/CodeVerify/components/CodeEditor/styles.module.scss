@@ -42,6 +42,26 @@
   color: var(--text);
 }
 
+/* Socket连接状态指示器样式 */
+.socketIndicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 16px;
+  transition: background-color 0.3s ease;
+  cursor: default;
+  
+  &.connected {
+    background-color: #52c41a; // 绿色
+    box-shadow: 0 0 5px rgba(82, 196, 26, 0.5);
+  }
+  
+  &.disconnected {
+    background-color: #f5222d; // 红色
+    box-shadow: 0 0 5px rgba(245, 34, 45, 0.5);
+  }
+}
+
 .needsCompile {
   position: relative;
   animation: pulse 1.5s infinite;

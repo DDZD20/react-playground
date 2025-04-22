@@ -21,6 +21,7 @@ class SocketService {
   private events = new EventEmitter();
   private userId: string | null = null;
   private userName: string | null = null;
+  private token: string | null = null;
   private baseUrl = '';
   private currentRoomId: string | null = null;
   private currentRole: UserRole | null = null;
@@ -43,14 +44,15 @@ class SocketService {
   /**
    * 连接到WebSocket服务器
    */
-  public async connect(baseUrl: string, userId: string, userName: string): Promise<boolean> {
+  public async connect(baseUrl: string, userId: string, userName: string, token?: string): Promise<boolean> {
     this.baseUrl = baseUrl;
     this.userId = userId;
     this.userName = userName;
+    this.token = token || null;
     
     try {
-      await this.connectMainNamespace();
-      this.connectOtherNamespaces();
+      await this.connectMainNamespace(token);
+      this.connectOtherNamespaces(token);
       return true;
     } catch (error) {
       console.error('Socket连接失败:', error);
@@ -61,7 +63,7 @@ class SocketService {
   /**
    * 连接主命名空间
    */
-  private connectMainNamespace(): Promise<void> {
+  private connectMainNamespace(token?: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const mainSocket = io(this.baseUrl, {
         autoConnect: true,
@@ -72,6 +74,9 @@ class SocketService {
         query: {
           userId: this.userId,
           userName: this.userName
+        },
+        auth: {
+          token: token
         }
       });
       
@@ -89,9 +94,10 @@ class SocketService {
         this.handleDisconnect(reason);
       });
       
-      mainSocket.on(SocketEvent.CONNECT_ERROR, (error: Error) => {
-        this.logSocketEvent('RECEIVE', 'MAIN', SocketEvent.CONNECT_ERROR, { error: error.message });
-        this.events.emit(SocketEvent.CONNECT_ERROR, error);
+      // 监听原生的connect_error事件，但触发我们自定义的CONNECTION_ERROR事件
+      mainSocket.on('connect_error', (error: Error) => {
+        this.logSocketEvent('RECEIVE', 'MAIN', 'connect_error', { error: error.message });
+        this.events.emit(SocketEvent.CONNECTION_ERROR, error);
         reject(error);
       });
       
@@ -107,18 +113,25 @@ class SocketService {
   /**
    * 连接其他命名空间
    */
-  private connectOtherNamespaces(): void {
-    const query = { userId: this.userId, userName: this.userName };
+  private connectOtherNamespaces(token?: string): void {
+    const query = { 
+      userId: this.userId, 
+      userName: this.userName
+    };
+    
+    const auth = {
+      token: token
+    };
     
     [
       { ns: SocketNamespace.INTERVIEW, name: 'interview' },
       { ns: SocketNamespace.CHAT, name: 'chat' },
       { ns: SocketNamespace.NOTIFICATION, name: 'notification' }
     ].forEach(({ ns, name }) => {
-      const socket = io(`${this.baseUrl}${ns}`, { query });
+      const socket = io(`${this.baseUrl}${ns}`, { query, auth });
       this.sockets.set(ns, socket);
       this.setupSocketListeners(socket, name);
-      this.logSocketEvent('SEND', name, 'connect', query);
+      this.logSocketEvent('SEND', name, 'connect', { query, auth });
     });
   }
   
@@ -144,7 +157,7 @@ class SocketService {
    */
   private async reconnect(): Promise<void> {
     try {
-      await this.connect(this.baseUrl, this.userId!, this.userName!);
+      await this.connect(this.baseUrl, this.userId!, this.userName!, this.token || undefined);
       // 如果之前在房间中，重新加入
       if (this.currentRoomId && this.currentRole) {
         this.joinRoom(this.currentRoomId, this.currentRole);

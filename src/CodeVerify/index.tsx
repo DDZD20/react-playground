@@ -3,16 +3,105 @@ import "allotment/dist/style.css";
 import Header from "./components/Header";
 import CodeEditor from "./components/CodeEditor";
 import RightPanel from "./components/RightPanel";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { PlaygroundContext } from "./PlaygroundContext";
 import AISidebar from "./components/AISidebar";
-import VideoChat from "./components/VideoChat/index";
+// import VideoChat from "./components/VideoChat/index";
+import { useSearchParams } from "react-router-dom";
+import socketService from "./services/SocketService";
+import { message } from "antd";
+import { UserRole } from "../api/types";
 
 import "./index.scss";
 
 export default function ReactPlayground() {
   const { theme, showAISidebar, toggleAISidebar } =
     useContext(PlaygroundContext);
+  const [searchParams] = useSearchParams();
+  const roomId = searchParams.get('roomId');
+  const isHost = searchParams.get('isHost') === 'true';
+  // const [socketConnected, setSocketConnected] = useState(false);
+  const [socketError, setSocketError] = useState<string | null>(null);
+
+  // 初始化socket连接
+  useEffect(() => {
+    // 检查必要参数
+    if (!roomId) {
+      setSocketError("房间ID缺失，无法建立连接");
+      return;
+    }
+
+    // 获取用户信息 - 从localStorage的user_info中获取
+    const userInfoStr = localStorage.getItem('user_info');
+    // 获取认证令牌
+    const token = localStorage.getItem('auth_token');
+    
+    if (!userInfoStr) {
+      setSocketError("用户信息缺失，无法建立连接");
+      return;
+    }
+    
+    if (!token) {
+      setSocketError("认证令牌缺失，无法建立连接");
+      return;
+    }
+
+    try {
+      const userInfo = JSON.parse(userInfoStr);
+      const userId = userInfo.id;
+      const userName = userInfo.username;
+
+      if (!userId || !userName) {
+        setSocketError("用户信息不完整，无法建立连接");
+        return;
+      }
+
+      // 初始化socket连接
+      const initializeSocket = async () => {
+        try {
+          // 连接到socket服务器，并传递token
+          const connected = await socketService.connect(
+            'ws://localhost:3000',
+            userId,
+            userName,
+            token // 添加token参数
+          );
+
+          if (connected) {
+            // setSocketConnected(true);
+            console.log("已连接到服务器");
+
+            // 加入房间
+            socketService.joinRoom(
+              roomId,
+              isHost ? 'host' as UserRole : 'interviewer' as UserRole
+            );
+          } else {
+            setSocketError("无法连接到服务器");
+          }
+        } catch (error) {
+          setSocketError(`连接错误: ${error instanceof Error ? error.message : '未知错误'}`);
+        }
+      };
+
+      initializeSocket();
+    } catch (error) {
+      setSocketError("解析用户信息失败");
+      console.error("解析用户信息失败:", error);
+    }
+
+    // 组件卸载时断开连接
+    return () => {
+      socketService.disconnect();
+    };
+  }, [roomId, isHost]);
+
+  // 显示错误提示
+  useEffect(() => {
+    if (socketError) {
+      message.error(socketError);
+    }
+  }, [socketError]);
 
   return (
     <div className={theme} style={{ height: "100vh" }}>

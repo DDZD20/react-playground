@@ -1,4 +1,4 @@
-import { useContext, useRef } from "react";
+import { useContext, useRef, useState, useEffect } from "react";
 import Editor from "./Editor";
 import FileNameList from "./FileNameList";
 import { PlaygroundContext } from "../../PlaygroundContext";
@@ -7,6 +7,8 @@ import * as monaco from 'monaco-editor';
 import { Button, Tooltip, Switch } from 'antd';
 import { PlayCircleOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import styles from './styles.module.scss';
+import socketService from "../../services/SocketService";
+import { SocketEvent } from "../../services/type";
 
 export default function CodeEditor() {
     const { 
@@ -25,9 +27,35 @@ export default function CodeEditor() {
     } = useContext(PlaygroundContext);
 
     const file = files[selectedFileName];
+    // socket连接状态
+    const [isSocketConnected, setIsSocketConnected] = useState<boolean>(false);
     
     // 创建对编辑器实例的引用
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+
+    // 监听socket连接状态
+    useEffect(() => {
+        // 立即检查当前连接状态
+        setIsSocketConnected(socketService.isConnected());
+        
+        // 订阅连接事件
+        const handleConnect = () => {
+            setIsSocketConnected(true);
+        };
+        
+        // 订阅断开事件
+        const handleDisconnect = () => {
+            setIsSocketConnected(false);
+        };
+        
+        socketService.on(SocketEvent.CONNECT, handleConnect);
+        socketService.on(SocketEvent.DISCONNECT, handleDisconnect);
+        
+        return () => {
+            socketService.off(SocketEvent.CONNECT, handleConnect);
+            socketService.off(SocketEvent.DISCONNECT, handleDisconnect);
+        };
+    }, []);
 
     function onEditorChange(value?: string) {
         if (!isDiffMode) {
@@ -135,6 +163,11 @@ export default function CodeEditor() {
                                 />
                                 <span className={styles.toggleLabel}>自动编译</span>
                             </span>
+                        </Tooltip>
+                        
+                        {/* Socket连接状态指示器 */}
+                        <Tooltip title={isSocketConnected ? "Socket已连接" : "Socket已断开"}>
+                            <div className={`${styles.socketIndicator} ${isSocketConnected ? styles.connected : styles.disconnected}`}></div>
                         </Tooltip>
                     </div>
                     

@@ -120,8 +120,8 @@ export class ChatService {
           resolve(true);
         });
         
-        // 连接错误回调
-        this.socket!.on('connect_error', (error: any) => { // 添加类型
+        // 连接错误回调 - 使用原生socket.io的事件名，但不再作为自定义事件发送
+        this.socket!.on('connect_error', (error: any) => {
           clearTimeout(timeout);
           console.error(`ChatService: WebSocket连接失败: ${error.message}`);
           this.notifyErrorCallbacks(new Error(`连接失败: ${error.message}`));
@@ -366,6 +366,7 @@ export class ChatService {
     // 重新连接错误
     this.socket.on('reconnect_error', (error: any) => {
       console.error(`ChatService: 重新连接发生错误: ${error.message || '未知错误'}`);
+      // 不向外部发送事件，只在内部处理
     });
     
     // 重新连接失败

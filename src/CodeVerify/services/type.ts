@@ -132,7 +132,7 @@ export enum SocketEvent {
   // 通用事件
   CONNECT = 'connect',
   DISCONNECT = 'disconnect',
-  CONNECT_ERROR = 'connect_error',
+  CONNECTION_ERROR = 'connection_error',
   
   // 房间事件
   JOIN_ROOM = 'joinRoom',
@@ -156,7 +156,7 @@ export enum SocketEvent {
 export interface EventMap {
   [SocketEvent.CONNECT]: void;
   [SocketEvent.DISCONNECT]: string;
-  [SocketEvent.CONNECT_ERROR]: Error;
+  [SocketEvent.CONNECTION_ERROR]: Error;
   'userJoined': { userId: string; userName: string; role?: UserRole };
   'userLeft': { userId: string; userName: string; role?: UserRole };
   'roomStatus': RoomStatus;
