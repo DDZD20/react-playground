@@ -131,6 +131,9 @@ const UserProfile: React.FC = () => {
           <Descriptions.Item label={<><CalendarOutlined /> 最后更新</>}>
             {formatDate(user.updatedAt || new Date())}
           </Descriptions.Item>
+          <Descriptions.Item label={<><MailOutlined /> 用户类型</>}>
+            {user.role}
+          </Descriptions.Item>
         </Descriptions>
 
         <div className={styles.actionsContainer}>
