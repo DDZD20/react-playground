@@ -15,11 +15,12 @@ interface RegisterProps {
  */
 const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onLoginClick }) => {
   // 表单状态
-  const [formData, setFormData] = useState<RegisterRequest & { confirmPassword: string }>({
+  const [formData, setFormData] = useState<RegisterRequest & { confirmPassword: string, role: 'Candidate' | 'Interviewer' }>({
     username: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'Candidate',
   });
   
   // 错误和加载状态
@@ -145,7 +146,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onLoginClick }) 
         {error && <div className={styles.authError}>{error}</div>}
         
         <form onSubmit={handleSubmit} className={styles.authForm}>
-          <div className={styles.formGroup}>
+          <div className={styles.formRow}>
             <label htmlFor="username">用户名</label>
             <input
               type="text"
@@ -159,8 +160,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onLoginClick }) 
             />
             {fieldErrors.username && <div className={styles.fieldError}>{fieldErrors.username}</div>}
           </div>
-          
-          <div className={styles.formGroup}>
+          <div className={styles.formRow}>
             <label htmlFor="email">电子邮箱</label>
             <input
               type="email"
@@ -174,8 +174,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onLoginClick }) 
             />
             {fieldErrors.email && <div className={styles.fieldError}>{fieldErrors.email}</div>}
           </div>
-          
-          <div className={styles.formGroup}>
+          <div className={styles.formRow}>
             <label htmlFor="password">密码</label>
             <input
               type="password"
@@ -189,8 +188,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onLoginClick }) 
             />
             {fieldErrors.password && <div className={styles.fieldError}>{fieldErrors.password}</div>}
           </div>
-          
-          <div className={styles.formGroup}>
+          <div className={styles.formRow}>
             <label htmlFor="confirmPassword">确认密码</label>
             <input
               type="password"
@@ -202,11 +200,35 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onLoginClick }) 
               disabled={isLoading}
               autoComplete="new-password"
             />
-            {fieldErrors.confirmPassword && (
-              <div className={styles.fieldError}>{fieldErrors.confirmPassword}</div>
-            )}
+            {fieldErrors.confirmPassword && <div className={styles.fieldError}>{fieldErrors.confirmPassword}</div>}
           </div>
-          
+          <div className={styles.formRow}>
+            <label>角色</label>
+            <div className={styles.roleRadioGroup}>
+              <label className={styles.radioLabel}>
+                <input
+                  type="radio"
+                  name="role"
+                  value="Candidate"
+                  checked={formData.role === 'Candidate'}
+                  onChange={() => setFormData(prev => ({ ...prev, role: 'Candidate' }))}
+                  disabled={isLoading}
+                />
+                候选人
+              </label>
+              <label className={styles.radioLabel}>
+                <input
+                  type="radio"
+                  name="role"
+                  value="Interviewer"
+                  checked={formData.role === 'Interviewer'}
+                  onChange={() => setFormData(prev => ({ ...prev, role: 'Interviewer' }))}
+                  disabled={isLoading}
+                />
+                面试官
+              </label>
+            </div>
+          </div>
           <button 
             type="submit" 
             className={styles.authButton}

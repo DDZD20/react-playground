@@ -50,6 +50,7 @@ export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
+  role: 'Candidate' | 'Interviewer';
 }
 
 // 项目相关接口
