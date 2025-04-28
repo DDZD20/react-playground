@@ -4,8 +4,6 @@ import styles from './VideoChatFloating.module.scss';
 import { 
   VideoCameraOutlined, 
   VideoCameraAddOutlined,
-  AudioOutlined,
-  AudioMutedOutlined,
   ExpandOutlined,
   CompressOutlined,
   UserOutlined,
