@@ -56,7 +56,7 @@ export class ChatService {
   private username: string;
   private connected: boolean = false;
 //   private reconnectAttempts: number = 0;
-  private readonly maxReconnectAttempts: number = 5;
+  // private readonly maxReconnectAttempts: number = 5;
   private reconnecting: boolean = false;
   private manualDisconnect: boolean = false;
   
