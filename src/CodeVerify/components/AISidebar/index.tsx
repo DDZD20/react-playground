@@ -139,7 +139,7 @@ const AISidebar = () => {
   };
 
   // 使用 ReactMarkdown 渲染消息内容
-  const CodeBlock = ({ node, inline, className, children, ...props }: any) => {
+  const CodeBlock = ({ className, children, ...props }: any) => {
     const { files, selectedFileName, setDiffMode } = useContext(PlaygroundContext);
     const match = /language-(\w+)/.exec(className || "");
     const code = String(children).replace(/\n$/, "");
@@ -242,7 +242,7 @@ const AISidebar = () => {
         components={{
           code: CodeBlock,
           // 其他自定义组件可以在这里添加
-          a: ({ node, ...props }) => (
+          a: ({...props }) => (
             <a target="_blank" rel="noopener noreferrer" {...props} />
           ),
         }}

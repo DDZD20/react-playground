@@ -142,8 +142,6 @@ export default function Editor(props: Props) {
           provideInlineCompletions: async (
             model: monaco.editor.ITextModel,
             position: Position,
-            _context: monaco.languages.InlineCompletionContext,
-            _token: monaco.CancellationToken
           ): Promise<monaco.languages.InlineCompletions> => {
             try {
               const wordUntilPosition = model.getWordUntilPosition(position);

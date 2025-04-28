@@ -137,12 +137,14 @@ ${fileContext ? `\n\n当前正在编辑的文件内容:\n${fileContext}` : ''}`;
 
       let accumulatedText = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
+      let done = false;
+      while (!done) {
+        const result = await reader.read();
+        done = result.done;
         if (done) break;
 
         // 解析返回的数据
-        const text = new TextDecoder().decode(value);
+        const text = new TextDecoder().decode(result.value);
         const lines = text.split('\n');
         
         for (const line of lines) {
@@ -212,12 +214,14 @@ ${contextCode}|
 
       let accumulatedText = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
+      let done = false;
+      while (!done) {
+        const result = await reader.read();
+        done = result.done;
         if (done) break;
 
         // 解析返回的数据
-        const text = new TextDecoder().decode(value);
+        const text = new TextDecoder().decode(result.value);
         const lines = text.split('\n');
         
         for (const line of lines) {

@@ -22,7 +22,7 @@ export default function ReactPlayground() {
   const isHost = searchParams.get('isHost') === 'true';
   // const [socketConnected, setSocketConnected] = useState(false);
   const [socketError, setSocketError] = useState<string | null>(null);
-  const [showVideoChat, setShowVideoChat] = useState(true);  // 控制视频聊天显示
+  // const [showVideoChat, setShowVideoChat] = useState(true);  // 控制视频聊天显示
 
   // 初始化socket连接
   useEffect(() => {
@@ -148,7 +148,7 @@ export default function ReactPlayground() {
       </div>
 
       {/* 视频聊天组件放在最外层，避免被其他元素遮挡 */}
-      {showVideoChat && <VideoChat />}
+      {<VideoChat />}
     </>
   );
 }

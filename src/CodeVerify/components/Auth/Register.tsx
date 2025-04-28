@@ -106,7 +106,7 @@ const Register: React.FC<RegisterProps> = ({ onRegisterSuccess, onLoginClick }) 
       setError('');
       
       // 准备发送的数据（去除confirmPassword）
-      const { confirmPassword, ...registerData } = formData;
+      const {...registerData } = formData;
       
       const response = await register(registerData);
       
