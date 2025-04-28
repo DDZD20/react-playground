@@ -8,8 +8,11 @@ import {
   AudioMutedOutlined,
   ExpandOutlined,
   CompressOutlined,
-  UserOutlined
+  UserOutlined,
+  SwapOutlined
 } from '@ant-design/icons';
+import socketService from '@/CodeVerify/services/SocketService';
+import MicLevelIcon from './MicLevelIcon';
 
 interface VideoState {
   isVideoEnabled: boolean;
@@ -32,6 +35,10 @@ const VideoChat: React.FC = () => {
     isDocked: false
   });
 
+  const [showSelf, setShowSelf] = useState(true);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<number | null>(null);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{ isDragging: boolean; startX: number; startY: number }>({
@@ -40,6 +47,97 @@ const VideoChat: React.FC = () => {
     startY: 0
   });
   const timeoutRef = useRef<number | null>(null);
+
+  // WebRTC 相关 hooks
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+
+  // 状态：音量等级
+  const [audioLevel, setAudioLevel] = useState(0);
+  const audioAnalyserRef = useRef<AnalyserNode | null>(null);
+  const audioAnimationRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    // 1. 获取本地音视频流
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(stream => {
+        localStreamRef.current = stream;
+        // 关键：每次都重新赋值 video 元素 srcObject，防止切换后失效
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+        // 2. 初始化 PeerConnection
+        pcRef.current = createPeerConnection();
+        // 3. 将本地流track加入PeerConnection
+        stream.getTracks().forEach(track => {
+          pcRef.current?.addTrack(track, stream);
+        });
+      }).catch(err => {
+        // 增加错误提示，方便调试
+        console.error('无法获取本地摄像头/麦克风', err);
+      });
+
+    // 4. 注册 socketService 信令事件
+    socketService.on('videoOffer', handleReceiveOffer);
+    socketService.on('videoAnswer', handleReceiveAnswer);
+    socketService.on('iceCandidate', handleReceiveCandidate);
+
+    return () => {
+      // 清理 PeerConnection
+      pcRef.current?.close();
+      pcRef.current = null;
+      localStreamRef.current?.getTracks().forEach(track => track.stop());
+      // 解绑信令事件
+      socketService.off('videoOffer', handleReceiveOffer);
+      socketService.off('videoAnswer', handleReceiveAnswer);
+      socketService.off('iceCandidate', handleReceiveCandidate);
+    };
+  // eslint-disable-next-line
+  }, []);
+
+  // 保证每次 isVideoEnabled 变化时都刷新 video 元素 srcObject
+  useEffect(() => {
+    if (localVideoRef.current && localStreamRef.current) {
+      localVideoRef.current.srcObject = localStreamRef.current;
+    }
+  }, [state.isVideoEnabled]);
+
+  // 监听本地音频流，实时计算音量等级
+  useEffect(() => {
+    if (!localStreamRef.current) return;
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64; // 提高灵敏度
+    analyser.smoothingTimeConstant = 0.4; // 适当平滑
+    const source = audioCtx.createMediaStreamSource(localStreamRef.current);
+    source.connect(analyser);
+    audioAnalyserRef.current = analyser;
+
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+    function updateLevel() {
+      analyser.getByteTimeDomainData(dataArray);
+      // 取波形的最大幅度变化
+      let max = 0;
+      let min = 255;
+      for (let i = 0; i < dataArray.length; i++) {
+        if (dataArray[i] > max) max = dataArray[i];
+        if (dataArray[i] < min) min = dataArray[i];
+      }
+      // 幅度范围归一化到 0~255
+      const amp = max - min;
+      setAudioLevel(amp * 2); // 放大灵敏度
+      audioAnimationRef.current = requestAnimationFrame(updateLevel);
+    }
+    updateLevel();
+    return () => {
+      if (audioAnimationRef.current) cancelAnimationFrame(audioAnimationRef.current);
+      analyser.disconnect();
+      source.disconnect();
+      audioCtx.close();
+    };
+  }, [localStreamRef.current]);
 
   // 创建portal容器
   useEffect(() => {
@@ -212,8 +310,22 @@ const VideoChat: React.FC = () => {
     };
   }, [state.edge, state.isExpanded]);
 
+  // 修复视频开关：控制本地视频track的enabled属性，并刷新video元素srcObject
   const toggleVideo = () => {
-    setState(prev => ({ ...prev, isVideoEnabled: !prev.isVideoEnabled }));
+    setState(prev => {
+      const newEnabled = !prev.isVideoEnabled;
+      // 控制本地流track
+      if (localStreamRef.current) {
+        localStreamRef.current.getVideoTracks().forEach(track => {
+          track.enabled = newEnabled;
+        });
+      }
+      // 重新赋值，确保UI刷新
+      if (localVideoRef.current && localStreamRef.current) {
+        localVideoRef.current.srcObject = localStreamRef.current;
+      }
+      return { ...prev, isVideoEnabled: newEnabled };
+    });
   };
 
   const toggleAudio = () => {
@@ -232,6 +344,95 @@ const VideoChat: React.FC = () => {
         position
       };
     });
+  };
+
+  // 自动隐藏 videoControls
+  useEffect(() => {
+    if (!showControls) return;
+    if (controlsTimeoutRef.current) window.clearTimeout(controlsTimeoutRef.current);
+    controlsTimeoutRef.current = window.setTimeout(() => setShowControls(false), 7000);
+    return () => {
+      if (controlsTimeoutRef.current) window.clearTimeout(controlsTimeoutRef.current);
+    };
+  }, [showControls]);
+
+  // 鼠标靠近视频区域时显示 controls
+  const handleMouseMoveOnVideo = () => {
+    setShowControls(true);
+  };
+
+  // 建立远端流后自动切换到显示面试官
+  useEffect(() => {
+    if (!showSelf && remoteVideoRef.current && remoteVideoRef.current.srcObject) {
+      setShowSelf(false);
+    }
+  }, [remoteVideoRef.current?.srcObject]);
+
+  // 翻转按钮 handler
+  const handleSwapVideo = () => {
+    setShowSelf(s => !s);
+    setShowControls(true);
+  };
+
+  // 创建 PeerConnection 并绑定事件
+  function createPeerConnection() {
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: 'stun:stun.xten.com:3478' },
+        { urls: 'stun:stun.qq.com:3478' },
+        { urls: 'stun:stun.uc.cn:3478' }
+      ]
+    });
+
+    // 收集本地 candidate
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        socketService.sendSignaling('iceCandidate', { candidate: event.candidate });
+      }
+    };
+
+    // 远端流 track
+    pc.ontrack = (event) => {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+      }
+    };
+
+    return pc;
+  }
+
+  // 处理收到 offer
+  async function handleReceiveOffer(data: any) {
+    if (!pcRef.current) pcRef.current = createPeerConnection();
+    await pcRef.current.setRemoteDescription(new RTCSessionDescription(data.offer));
+    // 创建 answer
+    const answer = await pcRef.current.createAnswer();
+    await pcRef.current.setLocalDescription(answer);
+    socketService.sendSignaling('videoAnswer', { answer });
+  }
+
+  // 处理收到 answer
+  async function handleReceiveAnswer(data: any) {
+    if (!pcRef.current) return;
+    await pcRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+  }
+
+  // 处理收到 candidate
+  async function handleReceiveCandidate(data: any) {
+    if (!pcRef.current) return;
+    try {
+      await pcRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+    } catch (err) {
+      console.error('添加 ICE candidate 失败', err);
+    }
+  }
+
+  // 发起通话（可绑定到按钮）
+  const startCall = async () => {
+    if (!pcRef.current) pcRef.current = createPeerConnection();
+    const offer = await pcRef.current.createOffer();
+    await pcRef.current.setLocalDescription(offer);
+    socketService.sendSignaling('videoOffer', { offer });
   };
 
   if (!portalRef.current) return null;
@@ -307,16 +508,28 @@ const VideoChat: React.FC = () => {
           onMouseDown={handleMouseDown}
         />
         
-        <div className={styles.videoContainer}>
+        <div className={styles.videoContainer} onMouseMove={handleMouseMoveOnVideo}>
           {state.isVideoEnabled ? (
-            <video
-              className={styles.videoElement}
-              autoPlay
-              muted={!state.isAudioEnabled}
-              playsInline
-            >
-              <source src="" type="video/mp4" />
-            </video>
+            <>
+              {showSelf ? (
+                <video
+                  className={styles.videoElement}
+                  autoPlay
+                  muted
+                  playsInline
+                  ref={localVideoRef}
+                  style={{ width: '100%', height: '100%', background: '#000' }}
+                />
+              ) : (
+                <video
+                  className={styles.videoElement}
+                  autoPlay
+                  playsInline
+                  ref={remoteVideoRef}
+                  style={{ width: '100%', height: '100%', background: '#222', position: 'absolute', top: 0, left: 0, opacity: 0 }}
+                />
+              )}
+            </>
           ) : (
             <div className={styles.placeholderAvatar}>
               <UserOutlined className={styles.avatarIcon} />
@@ -324,7 +537,14 @@ const VideoChat: React.FC = () => {
           )}
         </div>
 
-        <div className={styles.videoControls}>
+        <div className={styles.videoControls} style={{ opacity: showControls ? 1 : 0, transition: 'opacity 0.3s' }}>
+          <button 
+            className={styles.controlButton}
+            onClick={handleSwapVideo}
+            title={showSelf ? '切换显示面试官' : '切换显示自己'}
+          >
+            <SwapOutlined />
+          </button>
           <button 
             className={`${styles.controlButton} ${state.isVideoEnabled ? styles.active : ''}`}
             onClick={toggleVideo}
@@ -332,15 +552,13 @@ const VideoChat: React.FC = () => {
           >
             {state.isVideoEnabled ? <VideoCameraOutlined /> : <VideoCameraAddOutlined />}
           </button>
-
           <button 
-            className={`${styles.controlButton} ${state.isAudioEnabled ? styles.active : ''}`}
+            className={`${styles.controlButton}`}
             onClick={toggleAudio}
             title={state.isAudioEnabled ? '静音' : '取消静音'}
           >
-            {state.isAudioEnabled ? <AudioOutlined /> : <AudioMutedOutlined />}
+            <MicLevelIcon level={audioLevel} muted={!state.isAudioEnabled} size={28} />
           </button>
-
           <button 
             className={`${styles.controlButton}`}
             onClick={toggleExpand}

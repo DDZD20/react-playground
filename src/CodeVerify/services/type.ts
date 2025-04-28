@@ -163,4 +163,8 @@ export interface EventMap {
   'allReady': RoomStatus;
   'newMessage': ChatMessage;
   'newNotification': WebSocketMessage;
+  // === WebRTC 信令事件 ===
+  'videoOffer': any;      // 可根据实际信令结构细化类型
+  'videoAnswer': any;
+  'iceCandidate': any;
 } 

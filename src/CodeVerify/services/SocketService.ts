@@ -193,6 +193,20 @@ class SocketService {
         this.logSocketEvent('RECEIVE', namespace, SocketEvent.ALL_READY, data);
         this.events.emit('allReady', data);
       });
+      
+      // WebRTC信令事件监听
+      socket.on('videoOffer', (data: any) => {
+        this.logSocketEvent('RECEIVE', namespace, 'videoOffer', data);
+        this.events.emit('videoOffer', data);
+      });
+      socket.on('videoAnswer', (data: any) => {
+        this.logSocketEvent('RECEIVE', namespace, 'videoAnswer', data);
+        this.events.emit('videoAnswer', data);
+      });
+      socket.on('iceCandidate', (data: any) => {
+        this.logSocketEvent('RECEIVE', namespace, 'iceCandidate', data);
+        this.events.emit('iceCandidate', data);
+      });
     }
     
     // 聊天特有事件
@@ -307,6 +321,20 @@ class SocketService {
     
     this.logSocketEvent('SEND', 'chat', SocketEvent.SEND_MESSAGE, message);
     this.getSocket(SocketNamespace.CHAT).emit(SocketEvent.SEND_MESSAGE, message);
+  }
+  
+  /**
+   * 发送WebRTC信令（videoOffer、videoAnswer、iceCandidate）
+   * @param event 事件名
+   * @param data  信令数据
+   */
+  public sendSignaling(event: 'videoOffer' | 'videoAnswer' | 'iceCandidate', data: any): void {
+    // 事件名安全校验
+    if (!["videoOffer", "videoAnswer", "iceCandidate"].includes(event)) {
+      throw new Error('不支持的WebRTC信令事件');
+    }
+    this.logSocketEvent('SEND', 'interview', event, data);
+    this.getSocket(SocketNamespace.INTERVIEW).emit(event, data);
   }
   
   /**
