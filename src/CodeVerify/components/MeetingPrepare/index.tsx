@@ -16,7 +16,8 @@ const MeetingPrepare: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get('roomId');
-  const password = searchParams.get('password');
+  // 暂时不使用 password，但保留获取逻辑以备后续功能扩展
+  // const password = searchParams.get('password');
   const isHost = searchParams.get('isHost') === 'true';
 
   const [hasAudioPermission, setHasAudioPermission] = useState<boolean>(false);

@@ -257,7 +257,7 @@ class SocketService {
     this.currentRole = role;
     
     const request: JoinRoomRequest = {
-      roomId,
+      meetingNumber: roomId,
       userId: this.userId!,
       role
     };

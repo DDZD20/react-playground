@@ -426,7 +426,8 @@ const VideoChat: React.FC = () => {
   }
 
   // 发起通话（可绑定到按钮）
-  const startCall = async () => {
+  // 暂时不使用此函数，但保留以备后续功能扩展
+  const _startCall = async () => {
     if (!pcRef.current) pcRef.current = createPeerConnection();
     const offer = await pcRef.current.createOffer();
     await pcRef.current.setLocalDescription(offer);

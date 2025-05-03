@@ -141,7 +141,7 @@ const HomePage: React.FC = () => {
   };
 
   // 处理创建会议
-  const handleCreateMeeting = async (password?: string) => {
+  const handleCreateMeeting = async () => {
     // 获取当前用户信息
     const user = authService.getCurrentUser();
     if (!user) {
@@ -154,7 +154,7 @@ const HomePage: React.FC = () => {
       const res = await createRoom({ userId: user.id });
       if (res.success) {
         const params = new URLSearchParams();
-        params.set('roomId', res.data.meetingNumber);
+        params.set('roomId', res.roomId);
         message.success('创建会议成功！')
         navigate(`/meeting/prepare?${params.toString()}`);
       } else {
