@@ -31,7 +31,7 @@ export interface User {
   username: string;
   email: string;
   avatar?: string;
-  role: string;
+  role: UserRole;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -189,8 +189,8 @@ export interface CreateRoomResponse {
 
 // 加入房间请求参数
 export interface JoinRoomRequest {
-  roomId: string;
   userId: string;
+  meetingNumber: string;
   role: UserRole;
 }
 

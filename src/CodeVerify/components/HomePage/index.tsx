@@ -154,9 +154,8 @@ const HomePage: React.FC = () => {
       const res = await createRoom({ userId: user.id });
       if (res.success) {
         const params = new URLSearchParams();
-        params.set('roomId', res.roomId);
-        if (password) params.set('password', password);
-        params.set('isHost', 'true');
+        params.set('roomId', res.data.meetingNumber);
+        message.success('创建会议成功！')
         navigate(`/meeting/prepare?${params.toString()}`);
       } else {
         message?.error(res.message || '创建会议失败');
@@ -177,7 +176,7 @@ const HomePage: React.FC = () => {
     try {
       // 默认角色：Candidate
       const role: UserRole = user.role || 'Candidate';
-      const res = await joinRoom({ roomId, userId: user.id, role });
+      const res = await joinRoom({ meetingNumber: roomId, userId: user.id, role });
       if (res.success) {
         const params = new URLSearchParams();
         params.set('roomId', roomId);

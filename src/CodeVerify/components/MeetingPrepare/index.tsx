@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Card, Typography, Select, Button, Tooltip } from 'antd';
+import { Card, Typography, Select, Button, Tooltip, message } from 'antd';
 import { AudioOutlined, VideoCameraOutlined, AudioMutedOutlined, VideoCameraAddOutlined } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { joinRoom } from '../../../api/room';
 import styles from './index.module.scss';
 
 const { Title, Text } = Typography;
@@ -27,6 +28,7 @@ const MeetingPrepare: React.FC = () => {
   const [selectedAudioDevice, setSelectedAudioDevice] = useState<string>('');
   const [selectedVideoDevice, setSelectedVideoDevice] = useState<string>('');
   const [isDevicesReady, setIsDevicesReady] = useState<boolean>(false);
+  const [isJoining, setIsJoining] = useState<boolean>(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -277,16 +279,40 @@ const MeetingPrepare: React.FC = () => {
   };
 
   // 加入会议
-  const handleJoinMeeting = () => {
+  const handleJoinMeeting = async () => {
     if (!roomId) return;
-
-    // 只保留必要的参数
-    const params = new URLSearchParams();
-    params.set('roomId', roomId);
-    if (password) params.set('password', password);
-    if (isHost) params.set('isHost', 'true');
-
-    navigate(`/playground?${params.toString()}`);
+    
+    try {
+      // 设置加载状态
+      setIsJoining(true);
+      
+      // 调用后端接口
+      const response = await joinRoom({
+        meetingNumber: roomId, // 使用 roomId 作为会议号
+        userId: localStorage.getItem('userId') || '', // 从本地存储获取用户ID
+        role: isHost ? 'Interviewer' : 'Candidate' // 根据isHost判断角色
+      });
+      
+      // 检查响应是否成功
+      if (response.success) {
+        // 只保留必要的参数
+        const params = new URLSearchParams();
+        params.set('roomId', roomId);
+        // 成功后跳转到会议页面
+        navigate(`/playground?${params.toString()}`);
+      } else {
+        // 处理失败情况
+        console.error('加入会议失败:', response.message);
+        message.error(`加入会议失败: ${response.message || '未知错误'}`);
+      }
+    } catch (error) {
+      // 处理异常
+      console.error('加入会议异常:', error);
+      message.error('加入会议失败，请稍后重试');
+    } finally {
+      // 无论成功失败，都重置加载状态
+      setIsJoining(false);
+    }
   };
 
   useEffect(() => {
@@ -418,7 +444,8 @@ const MeetingPrepare: React.FC = () => {
               type="primary"
               size="large"
               onClick={handleJoinMeeting}
-              disabled={!isDevicesReady}
+              disabled={!isDevicesReady || isJoining}
+              loading={isJoining}
             >
               加入会议
             </Button>
