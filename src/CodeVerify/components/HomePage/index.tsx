@@ -4,6 +4,10 @@ import { useCodeBackground } from './useCodeBackground';
 import { AuthContainer } from '../Auth';
 import MeetingModal from './MeetingModal';
 import './styles.css';
+import authService from '../../services/AuthService';
+import { createRoom, joinRoom } from '../../../api/room';
+import type { UserRole } from '../../../api/types';
+import { message } from '../Message';
 
 // 导入图标
 import { 
@@ -137,31 +141,55 @@ const HomePage: React.FC = () => {
   };
 
   // 处理创建会议
-  const handleCreateMeeting = (name: string, password?: string) => {
-    console.log('创建会议:', name, password);
-    setShowMeetingModal(false);
-    // 使用 URL 参数导航到会议准备页面
-    const params = new URLSearchParams();
-    params.set('roomId', name);
-    if (password) {
-      params.set('password', password);
+  const handleCreateMeeting = async (password?: string) => {
+    // 获取当前用户信息
+    const user = authService.getCurrentUser();
+    if (!user) {
+      message?.error('用户未登录，无法创建会议');
+      return;
     }
-    params.set('isHost', 'true');
-    navigate(`/meeting/prepare?${params.toString()}`);
+    setShowMeetingModal(false);
+    try {
+      // 调用API创建房间
+      const res = await createRoom({ userId: user.id });
+      if (res.success) {
+        const params = new URLSearchParams();
+        params.set('roomId', res.roomId);
+        if (password) params.set('password', password);
+        params.set('isHost', 'true');
+        navigate(`/meeting/prepare?${params.toString()}`);
+      } else {
+        message?.error(res.message || '创建会议失败');
+      }
+    } catch (err) {
+      message?.error('创建会议异常');
+    }
   };
 
   // 处理加入会议
-  const handleJoinMeeting = (roomId: string, password?: string) => {
-    console.log('加入会议:', roomId, password);
-    setShowMeetingModal(false);
-    // 使用 URL 参数导航到会议准备页面
-    const params = new URLSearchParams();
-    params.set('roomId', roomId);
-    if (password) {
-      params.set('password', password);
+  const handleJoinMeeting = async (roomId: string, password?: string) => {
+    const user = authService.getCurrentUser();
+    if (!user) {
+      message?.error('用户未登录，无法加入会议');
+      return;
     }
-    params.set('isHost', 'false');
-    navigate(`/meeting/prepare?${params.toString()}`);
+    setShowMeetingModal(false);
+    try {
+      // 默认角色：Candidate
+      const role: UserRole = user.role || 'Candidate';
+      const res = await joinRoom({ roomId, userId: user.id, role });
+      if (res.success) {
+        const params = new URLSearchParams();
+        params.set('roomId', roomId);
+        if (password) params.set('password', password);
+        params.set('isHost', 'false');
+        navigate(`/meeting/prepare?${params.toString()}`);
+      } else {
+        message?.error(res.message || '加入会议失败');
+      }
+    } catch (err) {
+      message?.error('加入会议异常');
+    }
   };
 
   return (

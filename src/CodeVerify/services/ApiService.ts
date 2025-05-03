@@ -29,6 +29,20 @@ class ApiService {
       }
     });
 
+    // 请求拦截器：每次请求自动加 token
+    this.instance.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+          // 你后端如果需要 Bearer 前缀，这里可以加上
+          config.headers = config.headers || {};
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
     // 添加响应拦截器处理错误
     this.instance.interceptors.response.use(
       response => response, // 直接返回响应

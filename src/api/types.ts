@@ -173,7 +173,7 @@ export interface ChatRoom {
 }
 
 // 用户角色类型
-export type UserRole = 'host' | 'interviewer';
+export type UserRole = 'Candidate' | 'Interviewer';
 
 // 创建房间请求参数
 export interface CreateRoomRequest {

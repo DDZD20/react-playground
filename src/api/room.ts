@@ -8,7 +8,7 @@ import type {
   DestroyRoomResponse,
 } from './types';
 
-const BASE_URL = '/api/room';
+const BASE_URL = '/rooms';
 
 /**
  * 创建房间
@@ -16,7 +16,7 @@ const BASE_URL = '/api/room';
  * @returns 创建房间结果
  */
 export const createRoom = async (params: CreateRoomRequest): Promise<CreateRoomResponse> => {
-  return apiService.post(`${BASE_URL}/create`, params);
+  return apiService.post(`${BASE_URL}`, params);
 };
 
 /**

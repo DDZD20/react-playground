@@ -38,8 +38,7 @@ const MeetingModal: React.FC<MeetingModalProps> = ({
     try {
       const values = await form.validateFields();
       if (mode === 'create') {
-        const roomId = generateRoomId();
-        onCreateMeeting(roomId, values.password);
+        onCreateMeeting(values.password);
       } else {
         onJoinMeeting(values.roomId, values.password);
       }

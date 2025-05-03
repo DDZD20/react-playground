@@ -58,7 +58,7 @@ const Chat: React.FC<ChatProps> = ({ interviewId, interviewerName = '面试官',
     (socketService as any).on('reconnect_error', handleReconnectError);
 
     try {
-      socketService.joinRoom(interviewId, 'interviewer');
+      socketService.joinRoom(interviewId, 'Interviewer');
       setConnected(true);
     } catch {
       setConnected(false);
