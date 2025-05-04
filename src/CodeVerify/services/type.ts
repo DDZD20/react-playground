@@ -41,7 +41,7 @@ export interface DiffBlock {
   startLine: number;
   endLine: number;
   content: string;
-  type: 'added' | 'removed' | 'unchanged' | 'modified';
+  type: 'added' | 'removed' | 'unchanged';
   decorationIds: string[];
 }
 
