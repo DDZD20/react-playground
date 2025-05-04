@@ -50,6 +50,27 @@ async function fetchAISuggestions(
   }
 }
 
+// 高效去除 current 尾部与 suggestion 头部重叠部分，KMP 算法实现
+function stripPrefix(current: string, suggestion: string): string {
+  if (!current || !suggestion) return suggestion;
+  // 拼接字符串，中间加分隔符避免误匹配
+  const combined = current + '#' + suggestion;
+  const next = new Array(combined.length).fill(0);
+  for (let i = 1; i < combined.length; i++) {
+    let j = next[i - 1];
+    while (j > 0 && combined[i] !== combined[j]) {
+      j = next[j - 1];
+    }
+    if (combined[i] === combined[j]) {
+      j++;
+    }
+    next[i] = j;
+  }
+  // next[combined.length - 1] 即最大重叠长度
+  const overlap = next[combined.length - 1];
+  return suggestion.slice(overlap);
+}
+
 export default function Editor(props: Props) {
   const {
     file,
@@ -118,7 +139,9 @@ export default function Editor(props: Props) {
   useEffect(() => {
     if (onGetCodingActions) {
       // 创建一个函数传递给父组件，允许父组件随时获取行为片段
-      onGetCodingActions(codeAnalysisService.getCodingActions.bind(codeAnalysisService));
+      onGetCodingActions(
+        codeAnalysisService.getCodingActions.bind(codeAnalysisService)
+      );
     }
   }, [onGetCodingActions]);
 
@@ -131,10 +154,13 @@ export default function Editor(props: Props) {
     if (onMount) {
       onMount(editor);
     }
-    
+
     // 初始化代码分析服务
-    const codeAnalysisCleanup = codeAnalysisService.initialize(editor, monacoInstance);
-    
+    const codeAnalysisCleanup = codeAnalysisService.initialize(
+      editor,
+      monacoInstance
+    );
+
     editor.addCommand(
       monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyJ,
       () => {
@@ -146,77 +172,77 @@ export default function Editor(props: Props) {
       jsx: monacoInstance.languages.typescript.JsxEmit.Preserve,
       esModuleInterop: true,
     });
+    // 否则设置普通编辑器功能
+    const inlineCompletionProvider: monaco.languages.InlineCompletionsProvider =
+      {
+        provideInlineCompletions: async (
+          model: monaco.editor.ITextModel,
+          position: Position
+        ): Promise<monaco.languages.InlineCompletions> => {
+          try {
+            const wordUntilPosition = model.getWordUntilPosition(position);
 
-    // 如果是差异模式，初始化差异显示
-    if (isDiffMode) {
-      initializeDiffMode();
-    } else {
-      // 否则设置普通编辑器功能
-      const inlineCompletionProvider: monaco.languages.InlineCompletionsProvider =
-        {
-          provideInlineCompletions: async (
-            model: monaco.editor.ITextModel,
-            position: Position,
-          ): Promise<monaco.languages.InlineCompletions> => {
-            try {
-              const wordUntilPosition = model.getWordUntilPosition(position);
+            const suggestions = await fetchAISuggestions({
+              code: model.getValue(),
+              position: position,
+              wordUntilPosition: wordUntilPosition,
+            });
 
-              const suggestions = await fetchAISuggestions({
-                code: model.getValue(),
-                position: position,
-                wordUntilPosition: wordUntilPosition,
-              });
-
-              return {
-                items: suggestions.map((suggestion) => ({
-                  insertText: suggestion,
+            // 获取当前行（到光标前）的内容
+            const currentLinePrefix = model.getLineContent(position.lineNumber).slice(0, position.column - 1);
+            return {
+              items: suggestions.map((suggestion) => {
+                // 去除重复部分，仅补全新内容
+                const insertText = stripPrefix(currentLinePrefix, suggestion);
+                return {
+                  insertText,
                   range: new monacoInstance.Range(
                     position.lineNumber,
                     position.column,
                     position.lineNumber,
                     position.column
                   ),
-                })),
-              };
-            } catch (error) {
-              console.error("Inline completion error:", error);
-              return { items: [] };
-            }
-          },
-          freeInlineCompletions: () => {},
-        };
-
-      const disposable =
-        monacoInstance.languages.registerInlineCompletionsProvider(
-          ["typescript", "javascript", "typescriptreact", "javascriptreact"],
-          inlineCompletionProvider
-        );
-
-      editor.updateOptions({
-        inlineSuggest: {
-          enabled: true,
-          mode: "prefix",
+                };
+              }),
+            };
+          } catch (error) {
+            console.error("Inline completion error:", error);
+            return { items: [] };
+          }
         },
-      });
-
-      const ata = createATA((code, path) => {
-        monacoInstance.languages.typescript.typescriptDefaults.addExtraLib(
-          code,
-          `file://${path}`
-        );
-      });
-
-      editor.onDidChangeModelContent(() => {
-        ata(editor.getValue());
-      });
-
-      ata(editor.getValue());
-
-      return () => {
-        disposable.dispose();
-        codeAnalysisCleanup(); // 清理代码分析服务
+        freeInlineCompletions: () => {},
       };
-    }
+
+    const disposable =
+      monacoInstance.languages.registerInlineCompletionsProvider(
+        ["typescript", "javascript", "typescriptreact", "javascriptreact"],
+        inlineCompletionProvider
+      );
+
+    editor.updateOptions({
+      inlineSuggest: {
+        enabled: true,
+        mode: "prefix",
+      },
+    });
+
+    const ata = createATA((code, path) => {
+      monacoInstance.languages.typescript.typescriptDefaults.addExtraLib(
+        code,
+        `file://${path}`
+      );
+    });
+
+    editor.onDidChangeModelContent(() => {
+      ata(editor.getValue());
+    });
+
+    ata(editor.getValue());
+
+    return () => {
+      disposable.dispose();
+      codeAnalysisCleanup(); // 清理代码分析服务
+    };
   };
 
   return (
