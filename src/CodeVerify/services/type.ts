@@ -164,3 +164,17 @@ export interface EventMap {
   'newMessage': ChatMessage;
   'newNotification': WebSocketMessage;
 } 
+
+
+// 编码行为类型定义
+export type CodingActionType = 'type' | 'delete' | 'copy' | 'wait' | 'paste' | 'select' | 'undo' | 'redo' | 'completion';
+
+export interface CodingAction {
+  type: CodingActionType;
+  content: string;
+  timestamp: number;
+  duration: number;
+  speed?: number;
+  isCommit?: boolean;
+  extra?: Record<string, any>;
+}

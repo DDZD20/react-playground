@@ -5,8 +5,9 @@ import { Position } from "monaco-editor";
 import aiService from "../../../services/AIService";
 import { useEffect, useRef, useState } from "react";
 import diffService from "../../../services/DiffService";
-import { DiffBlock, DiffContext } from "../../../services/type";
+import { CodingAction, DiffBlock, DiffContext } from "../../../services/type";
 import "./diffStyles.css";
+import codeAnalysisService from "../../../services/CodeAnalysisService";
 
 export interface EditorFile {
   name: string;
@@ -24,6 +25,7 @@ interface Props {
   pendingCode?: string;
   onApplyChanges?: () => void;
   onCancelChanges?: () => void;
+  onGetCodingActions?: (getActions: () => CodingAction[]) => void;
 }
 
 interface AICompletionRequest {
@@ -59,6 +61,7 @@ export default function Editor(props: Props) {
     pendingCode = "",
     onApplyChanges,
     onCancelChanges,
+    onGetCodingActions,
   } = props;
 
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -111,6 +114,15 @@ export default function Editor(props: Props) {
   // 检查是否所有差异都已处理
   const allDiffsProcessed = diffService.allDiffsProcessed(diffBlocks);
 
+  // 将 getCodingActions 方法暴露给父组件
+  useEffect(() => {
+    if (onGetCodingActions) {
+      // 创建一个函数传递给父组件，允许父组件随时获取行为片段
+      onGetCodingActions(codeAnalysisService.getCodingActions.bind(codeAnalysisService));
+    }
+  }, [onGetCodingActions]);
+
+  // ========== 原有编辑器挂载逻辑 ==========
   const handleEditorMount: OnMount = (editor, monacoInstance) => {
     editorRef.current = editor;
     monacoRef.current = monacoInstance;
@@ -119,7 +131,10 @@ export default function Editor(props: Props) {
     if (onMount) {
       onMount(editor);
     }
-
+    
+    // 初始化代码分析服务
+    const codeAnalysisCleanup = codeAnalysisService.initialize(editor, monacoInstance);
+    
     editor.addCommand(
       monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyJ,
       () => {
@@ -199,6 +214,7 @@ export default function Editor(props: Props) {
 
       return () => {
         disposable.dispose();
+        codeAnalysisCleanup(); // 清理代码分析服务
       };
     }
   };
