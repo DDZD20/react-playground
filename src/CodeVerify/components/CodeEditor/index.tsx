@@ -9,6 +9,7 @@ import { PlayCircleOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import styles from './styles.module.scss';
 import socketService from "../../services/SocketService";
 import { SocketEvent } from "../../services/type";
+import { mergeActions } from "../../services/CodeAnalysisService";
 
 export default function CodeEditor() {
     const { 
@@ -32,6 +33,8 @@ export default function CodeEditor() {
     
     // 创建对编辑器实例的引用
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+    // 创建对获取行为片段函数的引用
+    const getCodingActionsRef = useRef<(() => any[]) | null>(null);
 
     // 监听socket连接状态
     useEffect(() => {
@@ -147,6 +150,9 @@ export default function CodeEditor() {
                     pendingCode={pendingCode || ''}
                     onApplyChanges={applyChanges}
                     onCancelChanges={cancelChanges}
+                    onGetCodingActions={(getActions) => {
+                        getCodingActionsRef.current = getActions;
+                    }}
                 />
                 
                 {/* 底部工具栏 */}
@@ -175,7 +181,15 @@ export default function CodeEditor() {
                         <Button 
                             type="primary" 
                             icon={<PlayCircleOutlined />}
-                            onClick={compileCode}
+                            onClick={() => {
+                                // 获取并打印行为片段
+                                if (getCodingActionsRef.current) {
+                                    const actions = getCodingActionsRef.current();
+                                    console.log('用户编码行为片段:', mergeActions(actions) );
+                                }
+                                // 执行编译
+                                compileCode();
+                            }}
                             className={needsCompile ? styles.needsCompile : ''}
                             disabled={autoCompile && !needsCompile}
                         >
