@@ -13,4 +13,9 @@ export default defineConfig({
       filename: 'dist/stats.html'  // 分析图表输出的文件名
     })
   ],
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
+  }
 })

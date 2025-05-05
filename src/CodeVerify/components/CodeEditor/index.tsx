@@ -4,7 +4,7 @@ import FileNameList from "./FileNameList";
 import { PlaygroundContext } from "../../PlaygroundContext";
 import { debounce } from 'lodash-es';
 import * as monaco from 'monaco-editor';
-import { Button, Tooltip, Switch } from 'antd';
+import { Button, Tooltip, Switch, notification } from 'antd';
 import { PlayCircleOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import styles from './styles.module.scss';
 import socketService from "../../services/SocketService";
@@ -50,13 +50,25 @@ export default function CodeEditor() {
         const handleDisconnect = () => {
             setIsSocketConnected(false);
         };
+
+        // 新通知事件处理
+        const handleNewNotification = (data: any) => {
+            // 兼容data结构，通常有title和content字段
+            notification.open({
+                message: data.title || '新通知',
+                description: data.content || (typeof data === 'string' ? data : JSON.stringify(data)),
+                duration: 4
+            });
+        };
         
         socketService.on(SocketEvent.CONNECT, handleConnect);
         socketService.on(SocketEvent.DISCONNECT, handleDisconnect);
+        socketService.on(SocketEvent.NEW_NOTIFICATION, handleNewNotification);
         
         return () => {
             socketService.off(SocketEvent.CONNECT, handleConnect);
             socketService.off(SocketEvent.DISCONNECT, handleDisconnect);
+            socketService.off(SocketEvent.NEW_NOTIFICATION, handleNewNotification);
         };
     }, []);
 

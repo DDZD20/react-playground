@@ -1,72 +1,96 @@
-import React, { useState } from 'react';
-import { Tabs } from 'antd';
-import type { TabsProps } from 'antd';
-import Preview from './Preview';
-import Console from './Console';
-import Chat from './Chat';
-import styles from './styles.module.scss';
-import { CodeOutlined, ConsoleSqlOutlined, MessageOutlined } from '@ant-design/icons';
+import React, { useState } from "react";
+import { Tabs } from "antd";
+import type { TabsProps } from "antd";
+import Preview from "./Preview";
+import Console from "./Console";
+import Chat from "./Chat";
+import styles from "./styles.module.scss";
+import {
+  CodeOutlined,
+  ConsoleSqlOutlined,
+  MessageOutlined,
+} from "@ant-design/icons";
+import { AliveScope, KeepAlive } from "react-activation";
 
 interface RightPanelProps {
+  meetingNumber: string | null;
+  userId: string;
+  username: string;
   // 后续可添加实际功能需要的props
 }
 
-const RightPanel: React.FC<RightPanelProps> = () => {
-  const [activeTab, setActiveTab] = useState('preview');
+const RightPanel: React.FC<RightPanelProps> = ({
+  meetingNumber,
+  userId,
+  username,
+}) => {
+  const [activeTab, setActiveTab] = useState("preview");
 
-  // 模拟数据 - 实际应该从props或全局状态获取
-  const mockInterviewId = "interview-123";
-  const mockUserId = "user-456";
-  const mockUsername = "测试用户";
-
-  const items: TabsProps['items'] = [
+  const items: TabsProps["items"] = [
     {
-      key: 'preview',
+      key: "preview",
       label: (
         <span>
           <CodeOutlined />
           预览
         </span>
       ),
-      children: <Preview />,
+      children: (
+        <KeepAlive>
+          <Preview />
+        </KeepAlive>
+      ),
+      forceRender: true,
     },
     {
-      key: 'console',
+      key: "console",
       label: (
         <span>
           <ConsoleSqlOutlined />
           控制台
         </span>
       ),
-      children: <Console />,
+      children: (
+        <KeepAlive>
+          <Console />
+        </KeepAlive>
+      ),
+      forceRender: true,
     },
     {
-      key: 'chat',
+      key: "chat",
       label: (
         <span>
           <MessageOutlined />
           聊天
         </span>
       ),
-      children: <Chat 
-        interviewId={mockInterviewId} 
-        userId={mockUserId} 
-        username={mockUsername} 
-      />,
+      children: (
+        <KeepAlive>
+          <Chat
+            interviewId={meetingNumber || ""}
+            userId={userId}
+            username={username}
+          />
+        </KeepAlive>
+      ),
+      forceRender: true,
     },
   ];
 
   return (
     <div className={styles.rightPanelContainer}>
-      <Tabs
-        activeKey={activeTab}
-        items={items}
-        onChange={setActiveTab}
-        type="card"
-        className={styles.tabs}
-      />
+      <AliveScope>
+        <Tabs
+          activeKey={activeTab}
+          items={items}
+          onChange={setActiveTab}
+          type="card"
+          className={styles.tabs}
+        />
+      </AliveScope>
     </div>
   );
 };
 
-export default RightPanel; 
+export default RightPanel;

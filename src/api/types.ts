@@ -31,7 +31,7 @@ export interface User {
   username: string;
   email: string;
   avatar?: string;
-  role: string;
+  role: UserRole;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -173,7 +173,7 @@ export interface ChatRoom {
 }
 
 // 用户角色类型
-export type UserRole = 'host' | 'interviewer';
+export type UserRole = 'Candidate' | 'Interviewer';
 
 // 创建房间请求参数
 export interface CreateRoomRequest {
@@ -185,12 +185,13 @@ export interface CreateRoomResponse {
   success: boolean;
   roomId: string;
   message?: string;
+  data: any;
 }
 
 // 加入房间请求参数
 export interface JoinRoomRequest {
-  roomId: string;
   userId: string;
+  roomId: string;
   role: UserRole;
 }
 
