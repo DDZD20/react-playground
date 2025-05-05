@@ -185,6 +185,7 @@ export interface CreateRoomResponse {
   success: boolean;
   roomId: string;
   message?: string;
+  data: any;
 }
 
 // 加入房间请求参数

@@ -18,16 +18,18 @@ export default function ReactPlayground() {
   const { theme, showAISidebar, toggleAISidebar } =
     useContext(PlaygroundContext);
   const [searchParams] = useSearchParams();
-  const roomId = searchParams.get('roomId');
+  const meetingNumber = searchParams.get('meetingNumber');
   const isHost = searchParams.get('isHost') === 'true';
   // const [socketConnected, setSocketConnected] = useState(false);
   const [socketError, setSocketError] = useState<string | null>(null);
   // const [showVideoChat, setShowVideoChat] = useState(true);  // 控制视频聊天显示
 
+  const userInfo = JSON.parse(localStorage.getItem('user_info') || '');
+
   // 初始化socket连接
   useEffect(() => {
     // 检查必要参数
-    if (!roomId) {
+    if (!meetingNumber) {
       setSocketError("房间ID缺失，无法建立连接");
       return;
     }
@@ -74,7 +76,7 @@ export default function ReactPlayground() {
 
             // 加入房间
             socketService.joinRoom(
-              roomId,
+              meetingNumber,
               isHost ? 'host' as UserRole : 'interviewer' as UserRole
             );
           } else {
@@ -95,7 +97,7 @@ export default function ReactPlayground() {
     return () => {
       socketService.disconnect();
     };
-  }, [roomId, isHost]);
+  }, [meetingNumber, isHost]);
 
   // 显示错误提示
   useEffect(() => {
@@ -114,7 +116,7 @@ export default function ReactPlayground() {
               <CodeEditor />
             </Allotment.Pane>
             <Allotment.Pane minSize={0}>
-              <RightPanel />
+              <RightPanel meetingNumber={meetingNumber} userId={userInfo.id} username={userInfo.username} />
             </Allotment.Pane>
           </Allotment>
 

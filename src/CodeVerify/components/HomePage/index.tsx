@@ -154,7 +154,7 @@ const HomePage: React.FC = () => {
       const res = await createRoom({ userId: user.id });
       if (res.success) {
         const params = new URLSearchParams();
-        params.set('roomId', res.roomId);
+        params.set('meetingNumber', res.data.meetingNumber);
         message.success('创建会议成功！')
         navigate(`/meeting/prepare?${params.toString()}`);
       } else {
@@ -166,7 +166,7 @@ const HomePage: React.FC = () => {
   };
 
   // 处理加入会议
-  const handleJoinMeeting = async (roomId: string, password?: string) => {
+  const handleJoinMeeting = async (meetingNumber: string) => {
     const user = authService.getCurrentUser();
     if (!user) {
       message?.error('用户未登录，无法加入会议');
@@ -176,13 +176,12 @@ const HomePage: React.FC = () => {
     try {
       // 默认角色：Candidate
       const role: UserRole = user.role || 'Candidate';
-      const res = await joinRoom({ meetingNumber: roomId, userId: user.id, role });
+      const res = await joinRoom({ meetingNumber: meetingNumber, userId: user.id, role });
       if (res.success) {
         const params = new URLSearchParams();
-        params.set('roomId', roomId);
-        if (password) params.set('password', password);
-        params.set('isHost', 'false');
-        navigate(`/meeting/prepare?${params.toString()}`);
+        params.set('meetingNumber', meetingNumber);
+        message.success('加入会议成功！')
+        navigate(`/meeting/prepare?${params.toString()}`);;
       } else {
         message?.error(res.message || '加入会议失败');
       }

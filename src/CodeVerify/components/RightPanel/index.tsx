@@ -8,16 +8,14 @@ import styles from './styles.module.scss';
 import { CodeOutlined, ConsoleSqlOutlined, MessageOutlined } from '@ant-design/icons';
 
 interface RightPanelProps {
+  meetingNumber: string | null;
+  userId: string;
+  username: string;
   // 后续可添加实际功能需要的props
 }
 
-const RightPanel: React.FC<RightPanelProps> = () => {
+const RightPanel: React.FC<RightPanelProps> = ({ meetingNumber, userId, username }) => {
   const [activeTab, setActiveTab] = useState('preview');
-
-  // 模拟数据 - 实际应该从props或全局状态获取
-  const mockInterviewId = "interview-123";
-  const mockUserId = "user-456";
-  const mockUsername = "测试用户";
 
   const items: TabsProps['items'] = [
     {
@@ -49,9 +47,9 @@ const RightPanel: React.FC<RightPanelProps> = () => {
         </span>
       ),
       children: <Chat 
-        interviewId={mockInterviewId} 
-        userId={mockUserId} 
-        username={mockUsername} 
+        interviewId={meetingNumber || ''} 
+        userId={userId} 
+        username={username}
       />,
     },
   ];

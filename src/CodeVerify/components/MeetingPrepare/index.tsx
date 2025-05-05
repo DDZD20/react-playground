@@ -15,7 +15,7 @@ interface DeviceInfo {
 const MeetingPrepare: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const roomId = searchParams.get('roomId');
+  const meetingNumber = searchParams.get('meetingNumber');
   // 暂时不使用 password，但保留获取逻辑以备后续功能扩展
   // const password = searchParams.get('password');
   const isHost = searchParams.get('isHost') === 'true';
@@ -281,7 +281,7 @@ const MeetingPrepare: React.FC = () => {
 
   // 加入会议
   const handleJoinMeeting = async () => {
-    if (!roomId) return;
+    if (!meetingNumber) return;
     
     try {
       // 设置加载状态
@@ -289,7 +289,7 @@ const MeetingPrepare: React.FC = () => {
       
       // 调用后端接口
       const response = await joinRoom({
-        meetingNumber: roomId, // 使用 roomId 作为会议号
+        meetingNumber: meetingNumber, // 使用 roomId 作为会议号
         userId: localStorage.getItem('userId') || '', // 从本地存储获取用户ID
         role: isHost ? 'Interviewer' : 'Candidate' // 根据isHost判断角色
       });
@@ -298,7 +298,7 @@ const MeetingPrepare: React.FC = () => {
       if (response.success) {
         // 只保留必要的参数
         const params = new URLSearchParams();
-        params.set('roomId', roomId);
+        params.set('meetingNumber', meetingNumber);
         // 成功后跳转到会议页面
         navigate(`/playground?${params.toString()}`);
       } else {
@@ -317,7 +317,7 @@ const MeetingPrepare: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!roomId) {
+    if (!meetingNumber) {
       navigate('/');
       return;
     }
@@ -335,7 +335,7 @@ const MeetingPrepare: React.FC = () => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [roomId, navigate]);
+  }, [meetingNumber, navigate]);
 
   // 监听设备变化
   useEffect(() => {
