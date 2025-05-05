@@ -549,8 +549,20 @@ const VideoChat: React.FC = () => {
             autoPlay
             playsInline
             ref={videoRef}
-            onLoadedMetadata={() => console.log('✅ 远端视频流已加载')}
-            onPlaying={() => console.log('✅ 远端视频正在播放')}
+            onLoadedMetadata={() => {
+              if (showSelf) {
+                console.log('✅ 本地视频流已加载');
+              } else {
+                console.log('✅ 远端视频流已加载');
+              }
+            }}
+            onPlaying={() => {
+              if (showSelf) {
+                console.log('✅ 本地视频正在播放');
+              } else {
+                console.log('✅ 远端视频正在播放');
+              }
+            }}
           />
         </div>
 
