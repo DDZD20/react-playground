@@ -6,6 +6,7 @@ import Console from './Console';
 import Chat from './Chat';
 import styles from './styles.module.scss';
 import { CodeOutlined, ConsoleSqlOutlined, MessageOutlined } from '@ant-design/icons';
+import { KeepAlive } from 'react-activation';
 
 interface RightPanelProps {
   meetingNumber: string | null;
@@ -26,7 +27,12 @@ const RightPanel: React.FC<RightPanelProps> = ({ meetingNumber, userId, username
           预览
         </span>
       ),
-      children: <Preview />,
+      children: (
+        <KeepAlive>
+          <Preview />
+        </KeepAlive>
+      ),
+      forceRender: true
     },
     {
       key: 'console',
@@ -36,7 +42,12 @@ const RightPanel: React.FC<RightPanelProps> = ({ meetingNumber, userId, username
           控制台
         </span>
       ),
-      children: <Console />,
+      children: (
+        <KeepAlive>
+          <Console />
+        </KeepAlive>
+      ),
+      forceRender: true
     },
     {
       key: 'chat',
@@ -46,11 +57,16 @@ const RightPanel: React.FC<RightPanelProps> = ({ meetingNumber, userId, username
           聊天
         </span>
       ),
-      children: <Chat 
-        interviewId={meetingNumber || ''} 
-        userId={userId} 
-        username={username}
-      />,
+      children: (
+        <KeepAlive>
+          <Chat 
+            interviewId={meetingNumber || ''} 
+            userId={userId} 
+            username={username}
+          />
+        </KeepAlive>
+      ),
+      forceRender: true
     },
   ];
 

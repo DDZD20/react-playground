@@ -6,6 +6,7 @@ import { ChatMessage } from '../../../../api/types';
 import ConnectionStatus from '../ConnectionStatus';
 import { socketService } from '../../../services/SocketService';
 import { formatTime } from '../../../utils';
+import { SocketEvent } from '../../../services/type';
 
 interface ChatProps {
   interviewId: string;
@@ -49,12 +50,12 @@ const Chat: React.FC<ChatProps> = ({ interviewId, interviewerName = '面试官',
     const handleReconnect = () => setReconnecting(true);
     const handleReconnectError = () => setReconnecting(false);
 
-    socketService.on('newMessage', handleNewMessage);
-    socketService.on('userJoined', handleUserJoined);
-    socketService.on('userLeft', handleUserLeft);
-    (socketService as any).on('connect', handleConnect);
-    (socketService as any).on('disconnect', handleDisconnect);
-    (socketService as any).on('reconnect', handleReconnect);
+    socketService.on(SocketEvent.NEW_MESSAGE, handleNewMessage);
+    socketService.on(SocketEvent.USER_JOINED, handleUserJoined);
+    socketService.on(SocketEvent.USER_LEFT, handleUserLeft);
+    socketService.on(SocketEvent.CONNECT, handleConnect);
+    socketService.on(SocketEvent.DISCONNECT, handleDisconnect);
+    (socketService as any).on('reconnect_success', handleReconnect);
     (socketService as any).on('reconnect_error', handleReconnectError);
 
     try {
@@ -66,12 +67,12 @@ const Chat: React.FC<ChatProps> = ({ interviewId, interviewerName = '面试官',
     setLoading(false);
 
     return () => {
-      socketService.off('newMessage', handleNewMessage);
-      socketService.off('userJoined', handleUserJoined);
-      socketService.off('userLeft', handleUserLeft);
-      (socketService as any).off('connect', handleConnect);
-      (socketService as any).off('disconnect', handleDisconnect);
-      (socketService as any).off('reconnect', handleReconnect);
+      socketService.off(SocketEvent.NEW_MESSAGE, handleNewMessage);
+      socketService.off(SocketEvent.USER_JOINED, handleUserJoined);
+      socketService.off(SocketEvent.USER_LEFT, handleUserLeft);
+      socketService.off(SocketEvent.CONNECT, handleConnect);
+      socketService.off(SocketEvent.DISCONNECT, handleDisconnect);
+      (socketService as any).off('reconnect_success', handleReconnect);
       (socketService as any).off('reconnect_error', handleReconnectError);
       socketService.leaveRoom();
     };
