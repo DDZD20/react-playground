@@ -114,7 +114,7 @@ const Chat: React.FC<ChatProps> = ({ interviewId, interviewerName = '面试官',
           <ConnectionStatus connected={connected} reconnecting={reconnecting} onReconnect={handleReconnect} />
         </div>
         <div className={styles.headerRight}>
-          <Avatar.Group maxCount={5} size="small">
+          <Avatar.Group size="small">
             {participants.map(p => (
               <Tooltip title={p.name} key={p.id}><Avatar icon={<UserOutlined />} /></Tooltip>
             ))}

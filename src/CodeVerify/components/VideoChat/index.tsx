@@ -6,12 +6,11 @@ import {
   VideoCameraAddOutlined,
   ExpandOutlined,
   CompressOutlined,
-  UserOutlined,
   SwapOutlined
 } from '@ant-design/icons';
 import socketService from '@/CodeVerify/services/SocketService';
+import authService from '@/CodeVerify/services/AuthService';
 import MicLevelIcon from './MicLevelIcon';
-
 interface VideoState {
   isVideoEnabled: boolean;
   isAudioEnabled: boolean;
@@ -47,10 +46,10 @@ const VideoChat: React.FC = () => {
   const timeoutRef = useRef<number | null>(null);
 
   // WebRTC 相关 hooks
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
 
   // 状态：音量等级
   const [audioLevel, setAudioLevel] = useState(0);
@@ -58,22 +57,22 @@ const VideoChat: React.FC = () => {
   const audioAnimationRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // 1. 获取本地音视频流
+    console.log('【调试】获取本地音视频流');
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then(stream => {
+        console.log('【调试】本地流 track:', stream.getTracks());
         localStreamRef.current = stream;
-        // 关键：每次都重新赋值 video 元素 srcObject，防止切换后失效
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
+        if (showSelf && videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.muted = true;
         }
-        // 2. 初始化 PeerConnection
+        console.log('【调试】创建 PeerConnection');
         pcRef.current = createPeerConnection();
-        // 3. 将本地流track加入PeerConnection
         stream.getTracks().forEach(track => {
+          console.log('【调试】addTrack', track.kind, track);
           pcRef.current?.addTrack(track, stream);
         });
       }).catch(err => {
-        // 增加错误提示，方便调试
         console.error('无法获取本地摄像头/麦克风', err);
       });
 
@@ -81,6 +80,7 @@ const VideoChat: React.FC = () => {
     socketService.on('videoOffer', handleReceiveOffer);
     socketService.on('videoAnswer', handleReceiveAnswer);
     socketService.on('iceCandidate', handleReceiveCandidate);
+    socketService.on('userJoined', handleUserJoined);
 
     return () => {
       // 清理 PeerConnection
@@ -91,16 +91,23 @@ const VideoChat: React.FC = () => {
       socketService.off('videoOffer', handleReceiveOffer);
       socketService.off('videoAnswer', handleReceiveAnswer);
       socketService.off('iceCandidate', handleReceiveCandidate);
+      socketService.off('userJoined', handleUserJoined);
     };
   // eslint-disable-next-line
   }, []);
 
-  // 保证每次 isVideoEnabled 变化时都刷新 video 元素 srcObject
+  // 切换显示内容时切换 video 源
   useEffect(() => {
-    if (localVideoRef.current && localStreamRef.current) {
-      localVideoRef.current.srcObject = localStreamRef.current;
+    if (videoRef.current) {
+      if (showSelf) {
+        videoRef.current.srcObject = localStreamRef.current;
+        videoRef.current.muted = true;
+      } else {
+        videoRef.current.srcObject = remoteStreamRef.current;
+        videoRef.current.muted = false;
+      }
     }
-  }, [state.isVideoEnabled]);
+  }, [showSelf]);
 
   // 监听本地音频流，实时计算音量等级
   useEffect(() => {
@@ -319,8 +326,8 @@ const VideoChat: React.FC = () => {
         });
       }
       // 重新赋值，确保UI刷新
-      if (localVideoRef.current && localStreamRef.current) {
-        localVideoRef.current.srcObject = localStreamRef.current;
+      if (videoRef.current && localStreamRef.current) {
+        videoRef.current.srcObject = localStreamRef.current;
       }
       return { ...prev, isVideoEnabled: newEnabled };
     });
@@ -361,10 +368,10 @@ const VideoChat: React.FC = () => {
 
   // 建立远端流后自动切换到显示面试官
   useEffect(() => {
-    if (!showSelf && remoteVideoRef.current && remoteVideoRef.current.srcObject) {
+    if (!showSelf && remoteStreamRef.current) {
       setShowSelf(false);
     }
-  }, [remoteVideoRef.current?.srcObject]);
+  }, [remoteStreamRef.current]);
 
   // 翻转按钮 handler
   const handleSwapVideo = () => {
@@ -374,6 +381,7 @@ const VideoChat: React.FC = () => {
 
   // 创建 PeerConnection 并绑定事件
   function createPeerConnection() {
+    console.log('【调试】创建 PeerConnection');
     const pc = new RTCPeerConnection({
       iceServers: [
         { urls: 'stun:stun.xten.com:3478' },
@@ -382,17 +390,26 @@ const VideoChat: React.FC = () => {
       ]
     });
 
+    pc.oniceconnectionstatechange = () => {
+      console.log('【调试】ICE 状态:', pc.iceConnectionState);
+    };
+
     // 收集本地 candidate
     pc.onicecandidate = (event) => {
+      console.log('【调试】onicecandidate', event.candidate);
       if (event.candidate) {
-        socketService.sendSignaling('iceCandidate', { candidate: event.candidate });
+        socketService.sendSignaling('iceCandidate', { roomId: socketService.getCurrentRoomId(), candidate: event.candidate });
       }
     };
 
     // 远端流 track
     pc.ontrack = (event) => {
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = event.streams[0];
+      console.log('【调试】ontrack event:', event);
+      const [remoteStream] = event.streams;
+      remoteStreamRef.current = remoteStream;
+      if (!showSelf && videoRef.current) {
+        videoRef.current.srcObject = remoteStream;
+        videoRef.current.muted = false;
       }
     };
 
@@ -401,22 +418,24 @@ const VideoChat: React.FC = () => {
 
   // 处理收到 offer
   async function handleReceiveOffer(data: any) {
+    console.log('【调试】收到 offer', data);
     if (!pcRef.current) pcRef.current = createPeerConnection();
     await pcRef.current.setRemoteDescription(new RTCSessionDescription(data.offer));
-    // 创建 answer
     const answer = await pcRef.current.createAnswer();
     await pcRef.current.setLocalDescription(answer);
-    socketService.sendSignaling('videoAnswer', { answer });
+    socketService.sendSignaling('videoAnswer', { roomId: socketService.getCurrentRoomId(), answer });
   }
 
   // 处理收到 answer
   async function handleReceiveAnswer(data: any) {
+    console.log('【调试】收到 answer', data);
     if (!pcRef.current) return;
     await pcRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
   }
 
   // 处理收到 candidate
   async function handleReceiveCandidate(data: any) {
+    console.log('【调试】收到 candidate', data);
     if (!pcRef.current) return;
     try {
       await pcRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
@@ -425,13 +444,30 @@ const VideoChat: React.FC = () => {
     }
   }
 
+  // 检测到有新用户加入房间时自动发起视频通话
+  async function handleUserJoined() {
+    console.log('【调试】新用户加入房间');
+    // 获取当前用户信息
+    const currentUser = authService.getCurrentUser();
+    // 只有面试官才发起 offer
+    if (!currentUser || currentUser.role !== 'Interviewer') {
+      console.log('当前用户不是面试官，不发起 offer');
+      return;
+    }
+    if (!pcRef.current) pcRef.current = createPeerConnection();
+    // 创建 offer 并发送
+    const offer = await pcRef.current.createOffer();
+    await pcRef.current.setLocalDescription(offer);
+    socketService.sendSignaling('videoOffer', { roomId: socketService.getCurrentRoomId(), offer });
+  }
+
   // 发起通话（可绑定到按钮）
   // 暂时不使用此函数，但保留以备后续功能扩展
   const _startCall = async () => {
     if (!pcRef.current) pcRef.current = createPeerConnection();
     const offer = await pcRef.current.createOffer();
     await pcRef.current.setLocalDescription(offer);
-    socketService.sendSignaling('videoOffer', { offer });
+    socketService.sendSignaling('videoOffer', { roomId: socketService.getCurrentRoomId(), offer });
   };
 
   if (!portalRef.current) return null;
@@ -508,32 +544,14 @@ const VideoChat: React.FC = () => {
         />
         
         <div className={styles.videoContainer} onMouseMove={handleMouseMoveOnVideo}>
-          {state.isVideoEnabled ? (
-            <>
-              {showSelf ? (
-                <video
-                  className={styles.videoElement}
-                  autoPlay
-                  muted
-                  playsInline
-                  ref={localVideoRef}
-                  style={{ width: '100%', height: '100%', background: '#000' }}
-                />
-              ) : (
-                <video
-                  className={styles.videoElement}
-                  autoPlay
-                  playsInline
-                  ref={remoteVideoRef}
-                  style={{ width: '100%', height: '100%', background: '#222', position: 'absolute', top: 0, left: 0, opacity: 0 }}
-                />
-              )}
-            </>
-          ) : (
-            <div className={styles.placeholderAvatar}>
-              <UserOutlined className={styles.avatarIcon} />
-            </div>
-          )}
+          <video
+            className={styles.videoElement}
+            autoPlay
+            playsInline
+            ref={videoRef}
+            onLoadedMetadata={() => console.log('✅ 远端视频流已加载')}
+            onPlaying={() => console.log('✅ 远端视频正在播放')}
+          />
         </div>
 
         <div className={styles.videoControls} style={{ opacity: showControls ? 1 : 0, transition: 'opacity 0.3s' }}>

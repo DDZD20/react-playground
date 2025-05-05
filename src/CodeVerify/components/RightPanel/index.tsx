@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
-import { Tabs } from 'antd';
-import type { TabsProps } from 'antd';
-import Preview from './Preview';
-import Console from './Console';
-import Chat from './Chat';
-import styles from './styles.module.scss';
-import { CodeOutlined, ConsoleSqlOutlined, MessageOutlined } from '@ant-design/icons';
-import { KeepAlive } from 'react-activation';
+import React, { useState } from "react";
+import { Tabs } from "antd";
+import type { TabsProps } from "antd";
+import Preview from "./Preview";
+import Console from "./Console";
+import Chat from "./Chat";
+import styles from "./styles.module.scss";
+import {
+  CodeOutlined,
+  ConsoleSqlOutlined,
+  MessageOutlined,
+} from "@ant-design/icons";
+import { AliveScope, KeepAlive } from "react-activation";
 
 interface RightPanelProps {
   meetingNumber: string | null;
@@ -15,12 +19,16 @@ interface RightPanelProps {
   // 后续可添加实际功能需要的props
 }
 
-const RightPanel: React.FC<RightPanelProps> = ({ meetingNumber, userId, username }) => {
-  const [activeTab, setActiveTab] = useState('preview');
+const RightPanel: React.FC<RightPanelProps> = ({
+  meetingNumber,
+  userId,
+  username,
+}) => {
+  const [activeTab, setActiveTab] = useState("preview");
 
-  const items: TabsProps['items'] = [
+  const items: TabsProps["items"] = [
     {
-      key: 'preview',
+      key: "preview",
       label: (
         <span>
           <CodeOutlined />
@@ -32,10 +40,10 @@ const RightPanel: React.FC<RightPanelProps> = ({ meetingNumber, userId, username
           <Preview />
         </KeepAlive>
       ),
-      forceRender: true
+      forceRender: true,
     },
     {
-      key: 'console',
+      key: "console",
       label: (
         <span>
           <ConsoleSqlOutlined />
@@ -47,10 +55,10 @@ const RightPanel: React.FC<RightPanelProps> = ({ meetingNumber, userId, username
           <Console />
         </KeepAlive>
       ),
-      forceRender: true
+      forceRender: true,
     },
     {
-      key: 'chat',
+      key: "chat",
       label: (
         <span>
           <MessageOutlined />
@@ -59,28 +67,30 @@ const RightPanel: React.FC<RightPanelProps> = ({ meetingNumber, userId, username
       ),
       children: (
         <KeepAlive>
-          <Chat 
-            interviewId={meetingNumber || ''} 
-            userId={userId} 
+          <Chat
+            interviewId={meetingNumber || ""}
+            userId={userId}
             username={username}
           />
         </KeepAlive>
       ),
-      forceRender: true
+      forceRender: true,
     },
   ];
 
   return (
     <div className={styles.rightPanelContainer}>
-      <Tabs
-        activeKey={activeTab}
-        items={items}
-        onChange={setActiveTab}
-        type="card"
-        className={styles.tabs}
-      />
+      <AliveScope>
+        <Tabs
+          activeKey={activeTab}
+          items={items}
+          onChange={setActiveTab}
+          type="card"
+          className={styles.tabs}
+        />
+      </AliveScope>
     </div>
   );
 };
 
-export default RightPanel; 
+export default RightPanel;

@@ -191,7 +191,7 @@ export interface CreateRoomResponse {
 // 加入房间请求参数
 export interface JoinRoomRequest {
   userId: string;
-  meetingNumber: string;
+  roomId: string;
   role: UserRole;
 }
 

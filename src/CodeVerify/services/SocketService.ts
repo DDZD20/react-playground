@@ -2,13 +2,9 @@ import { io } from "socket.io-client";
 import { EventEmitter } from 'events';
 import { 
   UserRole, 
-  WebSocketMessage,
-  ChatMessage,
   JoinRoomRequest,
 } from '../../api/types';
 import {
-  RoomStatus,
-  SocketNamespace,
   SocketEvent,
   EventMap
 } from './type';
@@ -364,7 +360,11 @@ class SocketService {
     this.currentRole = null;
     this.reconnectAttempts = 0;
   }
-}
+
+  public getCurrentRoomId(): string {
+    return this.currentRoomId || '';
+  }
+ }
 
 // 创建单例
 export const socketService = new SocketService();
