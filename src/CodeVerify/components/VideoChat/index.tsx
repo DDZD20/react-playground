@@ -57,7 +57,6 @@ const VideoChat: React.FC = () => {
   const audioAnimationRef = useRef<number | null>(null);
 
   useEffect(() => {
-    console.log('【调试】获取本地音视频流');
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then(stream => {
         console.log('【调试】本地流 track:', stream.getTracks());
