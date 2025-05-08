@@ -462,12 +462,12 @@ const VideoChat: React.FC = () => {
 
   // 发起通话（可绑定到按钮）
   // 暂时不使用此函数，但保留以备后续功能扩展
-  const _startCall = async () => {
-    if (!pcRef.current) pcRef.current = createPeerConnection();
-    const offer = await pcRef.current.createOffer();
-    await pcRef.current.setLocalDescription(offer);
-    socketService.sendSignaling('videoOffer', { roomId: socketService.getCurrentRoomId(), offer });
-  };
+  // const _startCall = async () => {
+  //   if (!pcRef.current) pcRef.current = createPeerConnection();
+  //   const offer = await pcRef.current.createOffer();
+  //   await pcRef.current.setLocalDescription(offer);
+  //   socketService.sendSignaling('videoOffer', { roomId: socketService.getCurrentRoomId(), offer });
+  // };
 
   if (!portalRef.current) return null;
 

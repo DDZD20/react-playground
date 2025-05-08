@@ -627,7 +627,7 @@ class DiffService {
 
     // 计算差异并应用到编辑器
     const blocks = this.calculateDiff(originalCode, pendingCode);
-    const decorationBlocks = this.mergeBlocks(blocks);
+    // const decorationBlocks = this.mergeBlocks(blocks);
     const updatedBlocks = this.applyDecorations(context, blocks);
     
     // 使用一个引用来跟踪最新的块状态

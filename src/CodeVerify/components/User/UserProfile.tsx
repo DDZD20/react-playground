@@ -111,7 +111,7 @@ const UserProfile: React.FC = () => {
         </div>
         <div className={styles.userInfo}>
           <Title level={2}>{user.username}</Title>
-          <p className={styles.subtitle}>{user.role === 'admin' ? '管理员' : '用户'}</p>
+          <p className={styles.subtitle}>{user.role === 'Interviewer' ? '面试官' : '面试者'}</p>
         </div>
       </div>
 

@@ -289,7 +289,7 @@ const MeetingPrepare: React.FC = () => {
       
       // 调用后端接口
       const response = await joinRoom({
-        meetingNumber: meetingNumber, // 使用 roomId 作为会议号
+        roomId: meetingNumber, // 使用 roomId 作为会议号
         userId: localStorage.getItem('userId') || '', // 从本地存储获取用户ID
         role: isHost ? 'Interviewer' : 'Candidate' // 根据isHost判断角色
       });

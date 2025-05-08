@@ -21,7 +21,7 @@ export const mockUsers: User[] = [
     username: TEST_USER.username,
     email: TEST_USER.email,
     avatar: 'https://avatars.githubusercontent.com/u/1',
-    role: 'user',
+    role: 'Candidate',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },

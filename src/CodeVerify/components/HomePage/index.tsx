@@ -176,7 +176,7 @@ const HomePage: React.FC = () => {
     try {
       // 默认角色：Candidate
       const role: UserRole = user.role || 'Candidate';
-      const res = await joinRoom({ meetingNumber: meetingNumber, userId: user.id, role });
+      const res = await joinRoom({ roomId: meetingNumber, userId: user.id, role });
       if (res.success) {
         const params = new URLSearchParams();
         params.set('meetingNumber', meetingNumber);
