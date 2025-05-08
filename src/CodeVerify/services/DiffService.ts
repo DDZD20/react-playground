@@ -742,7 +742,7 @@ class DiffService {
       return [];
     }
 
-    let filterBlocks = blocks.filter( block => block.type !== 'unchanged');
+    const filterBlocks = blocks.filter( block => block.type !== 'unchanged');
     const decorateBlocks: DiffBlock[][] = [];
     let currentGroup: DiffBlock[] = [];
     

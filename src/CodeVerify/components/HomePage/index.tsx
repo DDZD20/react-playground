@@ -181,7 +181,7 @@ const HomePage: React.FC = () => {
         const params = new URLSearchParams();
         params.set('meetingNumber', meetingNumber);
         message.success('加入会议成功！')
-        navigate(`/meeting/prepare?${params.toString()}`);;
+        navigate(`/meeting/prepare?${params.toString()}`);
       } else {
         message?.error(res.message || '加入会议失败');
       }

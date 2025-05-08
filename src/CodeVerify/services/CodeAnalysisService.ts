@@ -32,7 +32,7 @@ class CodeAnalysisService {
 
   private registerEventListeners(): void {
     if (!this.editor || !this.monacoInstance) return;
-    // @ts-ignore
+    // @ts-expect-error
     const typeDisposable = this.editor.onDidType((text: string) => {
       this.recordWaitIfNeeded();
       const now = Date.now();
@@ -61,9 +61,9 @@ class CodeAnalysisService {
       this.disposables.push(pasteDisposable);
     }
     // copy
-    // @ts-ignore
+    // @ts-expect-error
     if (this.editor.onDidCopy) {
-      // @ts-ignore
+      // @ts-expect-error
       const copyDisposable = this.editor.onDidCopy((e: any) => {
         this.recordWaitIfNeeded();
         const now = Date.now();
